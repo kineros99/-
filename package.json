@@ -1,0 +1,8 @@
+{
+  "name": "mapadaslojas",
+  "version": "1.0.0",
+  "description": "Mapa de lojas - Netlify Functions + Neon",
+  "dependencies": {
+    "@netlify/neon": "^1.1.0"
+  }
+}
