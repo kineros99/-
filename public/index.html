@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Encarregado - Lojas de Material de Construção RJ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header>
+        🔨 Lojas de Material de Construção RJ
+        <button id="toggle-sidebar-btn">☰ Filtros & Lojas</button>
+    </header>
+
+    <div id="overlay"></div>
+
+    <div class="wrapper">
+        <div id="sidebar">
+            <div class="sidebar-controls">
+                <h2>Filtros</h2>
+                <label for="bairro-filter">Filtrar por Bairro</label>
+                <input type="text" id="bairro-filter" placeholder="Digite um bairro...">
+                <button class="btn" id="filter-btn">Buscar</button>
+                <button class="btn" id="reset-btn">Limpar Filtro</button>
+                <button class="btn" id="geolocate-btn">📍 Minha Localização</button>
+                <button class="btn special" id="open-register-modal-btn">➕ Cadastre sua Loja</button>
+            </div>
+            <div id="lojasList">
+                </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Cadastre ou Gerencie sua Loja</h2>
+            <p>Insira um nome de usuário único. Se não existir, será criado junto com a sua loja.</p>
+            <form id="register-form">
+                <div class="form-section">
+                    <h4>Identificação</h4>
+                    <label for="username">Nome de Usuário (único)</label>
+                    <input type="text" id="username" name="username" required placeholder="Ex: amoedobotafogo">
+                </div>
+                <div class="form-section">
+                    <h4>Dados da Loja</h4>
+                    <label for="nome">Nome da Loja</label>
+                    <input type="text" id="nome" name="nome" required>
+                    <label for="endereco">Endereço Completo</label>
+                    <input type="text" id="endereco" name="endereco" required placeholder="Rua, Número, Bairro, Cidade, Estado">
+                    <label for="categoria">Categoria</label>
+                    <input type="text" id="categoria" name="categoria" placeholder="Material de Construção">
+                    <label for="telefone">Telefone</label>
+                    <input type="tel" id="telefone" name="telefone">
+                    <label for="website">Website (opcional)</label>
+                    <input type="url" id="website" name="website" placeholder="https://sualoja.com">
+                </div>
+                <button type="submit" id="submit-button">Cadastrar Loja</button>
+                <div id="form-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

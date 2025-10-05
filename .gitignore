@@ -1,0 +1,24 @@
+# Node / dependências
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Build / deploy
+dist/
+build/
+.netlify/
+.deploy/
+*.tmp
+
+# Ambiente
+.env
+.env.local
+
+# Editor / sistema
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Seeds e backups
+src/data/seed_from_array/

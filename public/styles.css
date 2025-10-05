@@ -1,0 +1,168 @@
+:root {
+    --primary-blue: #343D56;
+    --hover-blue: #2a2f45;
+    --sidebar-orange: rgba(255, 111, 0, 0.75);
+    --sidebar-orange-hover: rgba(255, 111, 0, 0.9);
+}
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body, html {
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #343d56;
+    overflow: hidden;
+}
+header {
+    position: relative;
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 15px;
+    font-size: 20px;
+    text-align: center;
+    font-weight: bold;
+    z-index: 1001;
+    height: 60px;
+}
+#toggle-sidebar-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: var(--sidebar-orange);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    z-index: 1002;
+    transition: background 0.3s;
+}
+#toggle-sidebar-btn:hover {
+    background: var(--sidebar-orange-hover);
+}
+.wrapper {
+    display: flex;
+    height: calc(100vh - 60px);
+    position: relative;
+}
+#sidebar {
+    width: 320px;
+    background: var(--primary-blue);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: transform 0.4s ease;
+    z-index: 1000;
+    color: white;
+}
+#sidebar.collapsed {
+    transform: translateX(-320px);
+}
+#overlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 60px);
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease;
+    z-index: 999;
+}
+#overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+label {
+    font-size: 14px;
+    color: #eee;
+    margin-bottom: 5px;
+    display: block;
+}
+select, input[type="text"], input[type="tel"], input[type="url"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+.btn, button {
+    width: 100%;
+    padding: 12px;
+    background: var(--sidebar-orange);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+    text-align: center;
+    margin-bottom: 5px;
+}
+.btn:hover, button:hover {
+    background: var(--sidebar-orange-hover);
+}
+.btn.special {
+    background: #17a2b8;
+}
+.btn.special:hover {
+    background: #138496;
+}
+#lojasList {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid #5a68a5;
+    padding-top: 10px;
+}
+.loja-item {
+    background: #495373;
+    margin-bottom: 8px;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.loja-item:hover {
+    background: #5a68a5;
+}
+.loja-nome {
+    font-weight: bold;
+    font-size: 1rem;
+    color: white;
+}
+.loja-endereco, .loja-telefone {
+    font-size: 0.9rem;
+    color: #eee;
+    margin-top: 4px;
+}
+#map {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+@media (max-width: 768px) {
+    #sidebar {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+    }
+}
+
+/* Modal Styles */
+.modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+.modal-content { background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 10px; position: relative; }
+.close-button { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+.close-button:hover, .close-button:focus { color: black; }
+#register-form { display: flex; flex-direction: column; gap: 15px; }
+.form-section { border: 1px solid #eee; padding: 15px; border-radius: 5px; }
+.form-section h4 { margin-top: 0; color: var(--primary-blue); }
+#form-message { margin-top: 10px; padding: 10px; border-radius: 5px; display: none; text-align: center; }
+#form-message.success { background-color: #d4edda; color: #155724; }
+#form-message.error { background-color: #f8d7da; color: #721c24; }

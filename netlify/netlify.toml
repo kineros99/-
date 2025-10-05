@@ -1,0 +1,32 @@
+# =====================================
+# Netlify configuration - Encarregado
+# =====================================
+
+[build]
+  # Pasta que será publicada no deploy
+  publish = "public"
+  # Comando de build (deixe vazio se não houver build step)
+  command = ""
+
+# Configuração para o ambiente de desenvolvimento local (netlify dev)
+[dev]
+  framework = "#auto"
+  command = ""
+  port = 8888
+  autoRefresh = true
+  publish = "public"
+
+# Redirecionamentos para as funções Netlify (API)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# Headers recomendados (opcional, mas ajuda segurança e performance)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
