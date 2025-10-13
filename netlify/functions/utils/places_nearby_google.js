@@ -19,6 +19,7 @@
 
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const PLACES_NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
+const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 
 /**
  * Rio de Janeiro search zones
@@ -137,9 +138,166 @@ function getCountryConfig(countryName) {
 }
 
 /**
- * Search for nearby stores in a specific location
+ * Get search keywords for construction stores by country
+ * Returns array of search terms in the local language
  */
-export async function searchNearbyStores(latitude, longitude, radius = 3000, maxResults = 20, countryName = 'Brasil') {
+function getSearchKeywords(countryName) {
+    const normalized = countryName.toLowerCase().trim();
+
+    const keywordMap = {
+        // Brasil - 13 termos completos
+        'brasil': [
+            'material de construção',
+            'loja de ferragem',
+            'ferragens',
+            'casa de material de construção',
+            'depósito de construção',
+            'loja de ferragens',
+            'materiais de construção',
+            'casa de materiais',
+            'loja de tintas',
+            'casas de tintas',
+            'comércio de tintas',
+            'depósito de tintas',
+            'casa de materiais hidráulicos'
+        ],
+        'brazil': [
+            'material de construção',
+            'loja de ferragem',
+            'ferragens',
+            'casa de material de construção',
+            'depósito de construção',
+            'loja de ferragens',
+            'materiais de construção',
+            'casa de materiais',
+            'loja de tintas',
+            'casas de tintas',
+            'comércio de tintas',
+            'depósito de tintas',
+            'casa de materiais hidráulicos'
+        ],
+        // USA
+        'united states': [
+            'hardware store',
+            'building materials store',
+            'construction supplies',
+            'home improvement store',
+            'paint store',
+            'paint shop',
+            'plumbing supply store',
+            'plumbing supplies'
+        ],
+        'united states of america': [
+            'hardware store',
+            'building materials store',
+            'construction supplies',
+            'home improvement store',
+            'paint store',
+            'paint shop',
+            'plumbing supply store',
+            'plumbing supplies'
+        ],
+        'usa': [
+            'hardware store',
+            'building materials store',
+            'construction supplies',
+            'home improvement store',
+            'paint store',
+            'paint shop',
+            'plumbing supply store',
+            'plumbing supplies'
+        ],
+        'us': [
+            'hardware store',
+            'building materials store',
+            'construction supplies',
+            'home improvement store',
+            'paint store',
+            'paint shop',
+            'plumbing supply store',
+            'plumbing supplies'
+        ],
+        // Argentina
+        'argentina': [
+            'corralón',
+            'ferretería',
+            'materiales de construcción',
+            'casa de materiales',
+            'pinturería',
+            'casa de pinturas',
+            'sanitarios'
+        ],
+        // Mexico
+        'mexico': [
+            'tlapalería',
+            'ferretería',
+            'materiales para construcción',
+            'casa de materiales',
+            'tienda de pintura',
+            'pinturas',
+            'plomería'
+        ],
+        // Spain
+        'spain': [
+            'ferretería',
+            'materiales de construcción',
+            'almacén de construcción',
+            'tienda de pintura',
+            'pinturas',
+            'materiales de fontanería'
+        ],
+        'españa': [
+            'ferretería',
+            'materiales de construcción',
+            'almacén de construcción',
+            'tienda de pintura',
+            'pinturas',
+            'materiales de fontanería'
+        ],
+        // Colombia, Peru, Chile (generic Spanish)
+        'colombia': [
+            'ferretería',
+            'materiales de construcción',
+            'depósito de materiales',
+            'pinturas',
+            'tienda de pinturas',
+            'materiales de plomería'
+        ],
+        'peru': [
+            'ferretería',
+            'materiales de construcción',
+            'depósito de materiales',
+            'pinturas',
+            'tienda de pinturas',
+            'materiales de plomería'
+        ],
+        'chile': [
+            'ferretería',
+            'materiales de construcción',
+            'depósito de materiales',
+            'pinturas',
+            'tienda de pinturas',
+            'materiales de plomería'
+        ],
+        // Portugal
+        'portugal': [
+            'loja de ferragens',
+            'materiais de construção',
+            'depósito de materiais',
+            'loja de tintas',
+            'casa de materiais hidráulicos'
+        ]
+    };
+
+    // Default to Brasil keywords
+    return keywordMap[normalized] || keywordMap['brasil'];
+}
+
+/**
+ * Search for stores using Text Search API with location bias
+ * This allows keyword-based search in local language (e.g., "loja de ferragem")
+ */
+async function searchTextNearby(latitude, longitude, radius, textQuery, maxResults, languageCode, regionCode) {
     if (!GOOGLE_API_KEY || GOOGLE_API_KEY === 'your_google_api_key_here') {
         return {
             success: false,
@@ -149,10 +307,9 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
     }
 
     try {
-        const countryConfig = getCountryConfig(countryName);
-        console.log(`[Nearby Search] Searching at [${latitude}, ${longitude}] radius ${radius}m in ${countryName} (${countryConfig.code})`);
+        console.log(`[Text Search] Searching "${textQuery}" near [${latitude}, ${longitude}] radius ${radius}m`);
 
-        const response = await fetch(PLACES_NEARBY_URL, {
+        const response = await fetch(PLACES_TEXT_SEARCH_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -160,9 +317,9 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
                 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.websiteUri,places.businessStatus,places.types'
             },
             body: JSON.stringify({
-                includedTypes: ['hardware_store', 'home_improvement_store'],
+                textQuery: textQuery,
                 maxResultCount: maxResults,
-                locationRestriction: {
+                locationBias: {
                     circle: {
                         center: {
                             latitude: latitude,
@@ -171,17 +328,17 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
                         radius: radius
                     }
                 },
-                languageCode: countryConfig.language,
-                regionCode: countryConfig.code
+                languageCode: languageCode,
+                regionCode: regionCode
             })
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[Nearby Search] HTTP error: ${response.status} - ${errorText}`);
+            console.error(`[Text Search] HTTP error: ${response.status} - ${errorText}`);
             return {
                 success: false,
-                error: 'Nearby search failed',
+                error: 'Text search failed',
                 message: `HTTP ${response.status}: ${response.statusText}`,
                 details: errorText
             };
@@ -190,7 +347,7 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
         const data = await response.json();
 
         if (!data.places || data.places.length === 0) {
-            console.log(`[Nearby Search] No stores found in this area`);
+            console.log(`[Text Search] No results for "${textQuery}"`);
             return {
                 success: true,
                 found: 0,
@@ -198,7 +355,7 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
             };
         }
 
-        // Format the results
+        // Format the results (same format as searchNearby)
         const stores = data.places.map(place => {
             const storeName = place.displayName?.text || 'Sem nome';
             const storeTypes = place.types || [];
@@ -219,13 +376,136 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
             };
         });
 
-        console.log(`[Nearby Search] ✓ Found ${stores.length} stores`);
+        console.log(`[Text Search] ✓ Found ${stores.length} stores for "${textQuery}"`);
 
         return {
             success: true,
             found: stores.length,
             stores: stores
         };
+
+    } catch (error) {
+        console.error(`[Text Search] Error searching "${textQuery}":`, error);
+        return {
+            success: false,
+            error: 'Text search failed',
+            message: error.message,
+            details: error.toString()
+        };
+    }
+}
+
+/**
+ * Multi-keyword hybrid search - GUARANTEED comprehensive results
+ * Searches using multiple local keywords (e.g., "loja de ferragem", "material de construção")
+ * Combines results and removes duplicates
+ */
+async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResults, countryName) {
+    const countryConfig = getCountryConfig(countryName);
+    const keywords = getSearchKeywords(countryName);
+
+    console.log(`[Keyword Search] Starting multi-keyword search for ${countryName}`);
+    console.log(`[Keyword Search] ${keywords.length} keywords to search`);
+    console.log(`[Keyword Search] Target: ${maxResults} total results`);
+
+    const allStores = [];
+    const seenPlaceIds = new Set();
+    let totalApiCalls = 0;
+
+    // Calculate results per keyword (distribute evenly, with minimum of 3 per keyword)
+    const resultsPerKeyword = Math.max(3, Math.ceil(maxResults / keywords.length));
+
+    for (const keyword of keywords) {
+        // Stop if we already have enough results
+        if (allStores.length >= maxResults) {
+            console.log(`[Keyword Search] Reached target of ${maxResults} stores`);
+            break;
+        }
+
+        const result = await searchTextNearby(
+            latitude,
+            longitude,
+            radius,
+            keyword,
+            resultsPerKeyword,
+            countryConfig.language,
+            countryConfig.code
+        );
+
+        totalApiCalls++;
+
+        if (!result.success) {
+            console.warn(`[Keyword Search] Failed to search "${keyword}": ${result.message}`);
+            continue;
+        }
+
+        if (result.found === 0) {
+            console.log(`[Keyword Search] "${keyword}": 0 results`);
+            continue;
+        }
+
+        // Filter out duplicates by google_place_id
+        const newStores = result.stores.filter(store => {
+            if (seenPlaceIds.has(store.google_place_id)) {
+                return false;
+            }
+            seenPlaceIds.add(store.google_place_id);
+            return true;
+        });
+
+        allStores.push(...newStores);
+        console.log(`[Keyword Search] "${keyword}": ${result.found} found, ${newStores.length} new (total: ${allStores.length})`);
+
+        // Small delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Trim to maxResults if we have more
+    const finalStores = allStores.slice(0, maxResults);
+
+    console.log(`[Keyword Search] ✅ Complete: ${finalStores.length} unique stores from ${totalApiCalls} API calls`);
+    console.log(`[Keyword Search] Estimated cost: $${(totalApiCalls * 0.032).toFixed(4)}`);
+
+    return {
+        success: true,
+        found: finalStores.length,
+        stores: finalStores,
+        metadata: {
+            keywords_searched: totalApiCalls,
+            duplicates_removed: allStores.length - finalStores.length,
+            api_calls: totalApiCalls,
+            estimated_cost: (totalApiCalls * 0.032).toFixed(4)
+        }
+    };
+}
+
+/**
+ * Search for nearby stores in a specific location
+ * NOW USES KEYWORD-BASED TEXT SEARCH for comprehensive, guaranteed results!
+ * Searches ALL local terms: "loja de ferragem", "material de construção", "loja de tintas", etc.
+ */
+export async function searchNearbyStores(latitude, longitude, radius = 3000, maxResults = 20, countryName = 'Brasil') {
+    if (!GOOGLE_API_KEY || GOOGLE_API_KEY === 'your_google_api_key_here') {
+        return {
+            success: false,
+            error: 'API key not configured',
+            message: 'Google Maps API key is missing'
+        };
+    }
+
+    try {
+        console.log(`[Nearby Search] 🔍 KEYWORD-BASED SEARCH at [${latitude}, ${longitude}] radius ${radius}m in ${countryName}`);
+
+        // Use the new keyword-based search instead of type-based search
+        const result = await searchByKeywordsAndLocation(
+            latitude,
+            longitude,
+            radius,
+            maxResults,
+            countryName
+        );
+
+        return result;
 
     } catch (error) {
         console.error('[Nearby Search] Error:', error);

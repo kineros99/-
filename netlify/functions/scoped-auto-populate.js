@@ -107,7 +107,8 @@ export const handler = async (event) => {
                 n.radius,
                 n.apuration_count,
                 n.city_id,
-                c.name as city_name
+                c.name as city_name,
+                c.country as city_country
             FROM neighborhoods n
             JOIN cities c ON c.id = n.city_id
             WHERE n.id = ANY(${neighborhood_ids})
@@ -155,7 +156,8 @@ export const handler = async (event) => {
                 parseFloat(neighborhood.center_lat),
                 parseFloat(neighborhood.center_lng),
                 neighborhood.radius,
-                Math.min(20, limit) // Google API max is 20 per call
+                Math.min(20, limit), // Google API max is 20 per call
+                neighborhood.city_country || 'Brasil' // Pass country for keyword selection
             );
 
             apiCallsForNeighborhood++;
