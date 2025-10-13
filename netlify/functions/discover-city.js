@@ -81,7 +81,16 @@ export const handler = async (event) => {
         `;
 
         if (existingCity.length > 0) {
-            console.log(`[Discover City] City already exists: ${existingCity[0].name}`);
+            const cityData = {
+                id: parseInt(existingCity[0].id),
+                name: existingCity[0].name,
+                state: existingCity[0].state,
+                country: existingCity[0].country,
+                center_lat: parseFloat(existingCity[0].center_lat),
+                center_lng: parseFloat(existingCity[0].center_lng),
+                neighborhood_count: parseInt(existingCity[0].neighborhood_count)
+            };
+            console.log(`[Discover City] City already exists: ${cityData.name} (ID: ${cityData.id})`);
             return {
                 statusCode: 200,
                 headers: {
@@ -90,7 +99,7 @@ export const handler = async (event) => {
                 },
                 body: JSON.stringify({
                     success: true,
-                    city: existingCity[0],
+                    city: cityData,
                     message: 'City already exists in database',
                     alreadyExists: true
                 }),
@@ -196,7 +205,17 @@ export const handler = async (event) => {
 
         const newCity = insertResult[0];
 
-        console.log(`[Discover City] ✓ City added to database with ID: ${newCity.id}`);
+        const cityData = {
+            id: parseInt(newCity.id),
+            name: newCity.name,
+            state: newCity.state,
+            country: newCity.country,
+            center_lat: parseFloat(newCity.center_lat),
+            center_lng: parseFloat(newCity.center_lng),
+            neighborhood_count: 0 // New city, no neighborhoods yet
+        };
+
+        console.log(`[Discover City] ✓ City added to database with ID: ${cityData.id}`);
 
         return {
             statusCode: 200,
@@ -206,16 +225,8 @@ export const handler = async (event) => {
             },
             body: JSON.stringify({
                 success: true,
-                city: {
-                    id: newCity.id,
-                    name: newCity.name,
-                    state: newCity.state,
-                    country: newCity.country,
-                    center_lat: parseFloat(newCity.center_lat),
-                    center_lng: parseFloat(newCity.center_lng),
-                    neighborhood_count: 0 // New city, no neighborhoods yet
-                },
-                message: `Cidade descoberta e adicionada: ${newCity.name}, ${newCity.state}`,
+                city: cityData,
+                message: `Cidade descoberta e adicionada: ${cityData.name}, ${cityData.state}`,
                 alreadyExists: false
             }),
         };
