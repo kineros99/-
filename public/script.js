@@ -15,7 +15,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // This is needed because the sidebar is position:fixed which can affect initial layout calculations
     setTimeout(() => {
         map.invalidateSize();
+        const mapContainer = document.getElementById('map');
+        const mapRect = mapContainer.getBoundingClientRect();
         console.log('[Map] Map size recalculated after initialization');
+        console.log('[Map] Map container dimensions:', {
+            width: mapRect.width,
+            height: mapRect.height,
+            top: mapRect.top,
+            left: mapRect.left,
+            zIndex: window.getComputedStyle(mapContainer).zIndex,
+            position: window.getComputedStyle(mapContainer).position
+        });
     }, 100);
 
     // Enable clustering for better performance with many markers
