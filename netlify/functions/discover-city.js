@@ -33,7 +33,7 @@
 
 import { neon } from '@netlify/neon';
 
-const sql = neon();
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const GOOGLE_GEOCODING_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 

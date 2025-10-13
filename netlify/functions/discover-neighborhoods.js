@@ -25,7 +25,7 @@
 
 import { neon } from '@netlify/neon';
 
-const sql = neon();
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const GOOGLE_PLACES_TEXT_SEARCH_URL = 'https://maps.googleapis.com/maps/api/place/textsearch/json';
 

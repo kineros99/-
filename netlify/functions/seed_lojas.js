@@ -12,7 +12,7 @@ import { neon } from '@netlify/neon';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const sql = neon(); // uses NETLIFY_DATABASE_URL automatically
+const sql = neon(process.env.NETLIFY_DATABASE_URL); // uses NETLIFY_DATABASE_URL automatically
 
 // ABSOLUTE PATH to data file
 const PROJECT_ROOT = '/Users/eros/Desktop/encarregado';

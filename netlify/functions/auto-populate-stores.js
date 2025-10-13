@@ -21,7 +21,7 @@
 import { neon } from '@netlify/neon';
 import { searchAllRioZones } from './utils/places_nearby_google.js';
 
-const sql = neon();
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123'; // Set in Netlify env vars
 
 export const handler = async (event) => {

@@ -22,7 +22,7 @@ import { neon } from '@netlify/neon';
 import { geocodeAddress, validateCoordinates } from './utils/geocoding_google.js';
 import { findBusinessByAddress } from './utils/places_google.js';
 
-const sql = neon(); // uses NETLIFY_DATABASE_URL automatically
+const sql = neon(process.env.NETLIFY_DATABASE_URL); // uses NETLIFY_DATABASE_URL automatically
 
 export const handler = async (event) => {
   // Only allow POST requests

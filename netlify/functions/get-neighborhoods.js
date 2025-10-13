@@ -31,7 +31,7 @@
 
 import { neon } from '@netlify/neon';
 
-const sql = neon();
+const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 /**
  * Calculate the store limit based on apuration count

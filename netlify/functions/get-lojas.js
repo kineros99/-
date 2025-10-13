@@ -1,6 +1,6 @@
 import { neon } from '@netlify/neon';
 
-const sql = neon(); // uses NETLIFY_DATABASE_URL automatically
+const sql = neon(process.env.NETLIFY_DATABASE_URL); // uses NETLIFY_DATABASE_URL automatically
 
 export const handler = async (event) => {
   try {
