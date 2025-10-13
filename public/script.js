@@ -23,10 +23,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cache local para todas as lojas
     let allLojas = [];
     let userLocation = null; // Store user's location
+    let radiusCircle = null; // Store radius circle overlay
     const userLocationMarker = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
     });
+
+    // Calculate distance between two coordinates (Haversine formula)
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; // Distance in km
+    };
 
     // Function to show route to a loja
     const showRoute = (destLat, destLng, lojaName) => {
@@ -271,12 +284,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggle-sidebar-btn').addEventListener('click', () => toggleSidebar());
     document.getElementById('overlay').addEventListener('click', () => toggleSidebar(true));
 
-    // Função para filtrar lojas localmente por busca, bairro, categoria e fonte
+    // Radius slider update
+    const radiusSlider = document.getElementById('radius-slider');
+    const radiusValue = document.getElementById('radius-value');
+    radiusSlider.addEventListener('input', (e) => {
+        radiusValue.textContent = `${e.target.value} km`;
+        if (userLocation && radiusCircle) {
+            // Update circle radius
+            radiusCircle.setRadius(parseFloat(e.target.value) * 1000); // Convert km to meters
+            filterLojas(); // Re-filter with new radius
+        }
+    });
+
+    // Função para filtrar lojas localmente por busca, bairro, categoria, fonte e raio
     const filterLojas = () => {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const bairroFilter = document.getElementById('bairro-filter').value.toLowerCase();
         const categoryFilter = document.getElementById('category-filter').value;
         const sourceFilter = document.getElementById('source-filter').value;
+        const radiusKm = parseFloat(radiusSlider.value);
 
         const filteredLojas = allLojas.filter(loja => {
             const matchSearch = !searchTerm ||
@@ -293,7 +319,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchSource = sourceFilter === 'all' ||
                 loja.source === sourceFilter;
 
-            return matchSearch && matchBairro && matchCategory && matchSource;
+            // Radius filter (only apply if user has set location)
+            let matchRadius = true;
+            if (userLocation && loja.latitude && loja.longitude) {
+                const distance = calculateDistance(
+                    userLocation.latitude,
+                    userLocation.longitude,
+                    parseFloat(loja.latitude),
+                    parseFloat(loja.longitude)
+                );
+                matchRadius = distance <= radiusKm;
+            }
+
+            return matchSearch && matchBairro && matchCategory && matchSource && matchRadius;
         });
 
         renderLojas(filteredLojas);
@@ -335,12 +373,32 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
             userLocation = { latitude, longitude }; // Store location
-            map.setView([latitude, longitude], 15);
+
+            // Remove old circle if exists
+            if (radiusCircle) {
+                map.removeLayer(radiusCircle);
+            }
+
+            // Draw radius circle
+            const radiusKm = parseFloat(radiusSlider.value);
+            radiusCircle = L.circle([latitude, longitude], {
+                color: '#FF6F00',
+                fillColor: '#FF6F00',
+                fillOpacity: 0.1,
+                radius: radiusKm * 1000 // Convert km to meters
+            }).addTo(map);
+
+            map.setView([latitude, longitude], 13);
             L.marker([latitude, longitude], { icon: userLocationMarker })
                 .addTo(map)
                 .bindPopup("📍 Você está aqui")
                 .openPopup();
+
             console.log(`[Geolocation] User location stored: ${latitude}, ${longitude}`);
+            console.log(`[Geolocation] Radius: ${radiusKm} km`);
+
+            // Apply radius filter
+            filterLojas();
         }, () => {
             alert("Não foi possível obter sua localização.");
         });

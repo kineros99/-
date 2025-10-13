@@ -54,6 +54,15 @@
                     <option value="verified">🧵 Apenas Verificadas</option>
                 </select>
 
+                <label for="radius-filter"><i class="fas fa-circle-notch"></i> Raio de Busca</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <input type="range" id="radius-slider" min="1" max="50" value="50" style="flex: 1;">
+                    <span id="radius-value" style="min-width: 50px; font-weight: bold; color: var(--primary-blue);">50 km</span>
+                </div>
+                <small style="color: #666; display: block; margin-top: -5px; margin-bottom: 10px;">
+                    Use o botão 📍 para ativar busca por raio
+                </small>
+
                 <div class="btn-group">
                     <button class="btn" id="filter-btn">
                         <i class="fas fa-search"></i> Buscar
@@ -105,6 +114,16 @@
             </form>
         </div>
     </div>
+
+    <footer id="partner-footer">
+        <div class="partner-container">
+            <div class="partner-logo-slot"></div>
+            <div class="partner-logo-slot"></div>
+            <div class="partner-logo-slot"></div>
+            <div class="partner-logo-slot"></div>
+            <div class="partner-logo-slot"></div>
+        </div>
+    </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
