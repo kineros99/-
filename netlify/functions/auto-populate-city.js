@@ -152,7 +152,8 @@ export const handler = async (event) => {
         console.log('\n[Auto-Populate City] Step 4: Searching Google Places API...');
 
         // Use the generic search function with this city's neighborhoods
-        const searchResult = await searchAllZones(111, existingPlaceIds, neighborhoods, city.country);
+        // Limit to 5 neighborhoods per run to prevent timeout (5 keywords × 5 neighborhoods × ~1s = ~25s total)
+        const searchResult = await searchAllZones(111, existingPlaceIds, neighborhoods, city.country, 5);
 
         if (!searchResult.success) {
             throw new Error('Failed to search Google Places API');
@@ -163,6 +164,8 @@ export const handler = async (event) => {
         console.log(`\n[Auto-Populate City] Search complete:`);
         console.log(`  - Stores found: ${statistics.storesFound}`);
         console.log(`  - Stores skipped: ${statistics.storesSkipped}`);
+        console.log(`  - Neighborhoods searched: ${statistics.zonesSearched}/${statistics.totalZones}`);
+        console.log(`  - Remaining neighborhoods: ${statistics.remainingZones}`);
         console.log(`  - API calls used: ${statistics.apiCallsUsed}`);
         console.log(`  - Estimated cost: $${statistics.estimatedCost}`);
 
@@ -287,7 +290,11 @@ export const handler = async (event) => {
                     storesAdded: storesAdded,
                     storesSkipped: statistics.storesSkipped,
                     storesFoundByGoogle: statistics.storesFound,
-                    neighborhoodsSearched: neighborhoods.length,
+                    neighborhoodsSearched: statistics.zonesSearched,
+                    totalNeighborhoods: statistics.totalZones,
+                    remainingNeighborhoods: statistics.remainingZones,
+                    hitNeighborhoodLimit: statistics.hitNeighborhoodLimit,
+                    moreAvailable: statistics.remainingZones > 0,
                     apiCallsUsed: statistics.apiCallsUsed,
                     estimatedCost: `$${statistics.estimatedCost}`,
                     executionTimeMs: executionTime

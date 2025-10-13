@@ -145,105 +145,72 @@ function getSearchKeywords(countryName) {
     const normalized = countryName.toLowerCase().trim();
 
     const keywordMap = {
-        // Brasil - 13 termos completos
+        // Brasil - 5 most effective terms (optimized for speed)
         'brasil': [
-            'material de construção',
-            'loja de ferragem',
-            'ferragens',
-            'casa de material de construção',
-            'depósito de construção',
-            'loja de ferragens',
-            'materiais de construção',
-            'casa de materiais',
-            'loja de tintas',
-            'casas de tintas',
-            'comércio de tintas',
-            'depósito de tintas',
-            'casa de materiais hidráulicos'
+            'material de construção',      // Most common, covers general stores
+            'loja de ferragem',             // Hardware stores
+            'loja de tintas',               // Paint stores (very specific)
+            'depósito de construção',       // Large suppliers
+            'casa de materiais hidráulicos' // Plumbing specialists
         ],
         'brazil': [
             'material de construção',
             'loja de ferragem',
-            'ferragens',
-            'casa de material de construção',
-            'depósito de construção',
-            'loja de ferragens',
-            'materiais de construção',
-            'casa de materiais',
             'loja de tintas',
-            'casas de tintas',
-            'comércio de tintas',
-            'depósito de tintas',
+            'depósito de construção',
             'casa de materiais hidráulicos'
         ],
-        // USA
+        // USA - 5 most effective terms
         'united states': [
             'hardware store',
             'building materials store',
-            'construction supplies',
             'home improvement store',
             'paint store',
-            'paint shop',
-            'plumbing supply store',
-            'plumbing supplies'
+            'plumbing supply store'
         ],
         'united states of america': [
             'hardware store',
             'building materials store',
-            'construction supplies',
             'home improvement store',
             'paint store',
-            'paint shop',
-            'plumbing supply store',
-            'plumbing supplies'
+            'plumbing supply store'
         ],
         'usa': [
             'hardware store',
             'building materials store',
-            'construction supplies',
             'home improvement store',
             'paint store',
-            'paint shop',
-            'plumbing supply store',
-            'plumbing supplies'
+            'plumbing supply store'
         ],
         'us': [
             'hardware store',
             'building materials store',
-            'construction supplies',
             'home improvement store',
             'paint store',
-            'paint shop',
-            'plumbing supply store',
-            'plumbing supplies'
+            'plumbing supply store'
         ],
-        // Argentina
+        // Argentina - 5 most effective terms
         'argentina': [
             'corralón',
             'ferretería',
             'materiales de construcción',
-            'casa de materiales',
             'pinturería',
-            'casa de pinturas',
             'sanitarios'
         ],
-        // Mexico
+        // Mexico - 5 most effective terms
         'mexico': [
             'tlapalería',
             'ferretería',
             'materiales para construcción',
-            'casa de materiales',
             'tienda de pintura',
-            'pinturas',
             'plomería'
         ],
-        // Spain
+        // Spain - 5 most effective terms
         'spain': [
             'ferretería',
             'materiales de construcción',
             'almacén de construcción',
             'tienda de pintura',
-            'pinturas',
             'materiales de fontanería'
         ],
         'españa': [
@@ -251,16 +218,14 @@ function getSearchKeywords(countryName) {
             'materiales de construcción',
             'almacén de construcción',
             'tienda de pintura',
-            'pinturas',
             'materiales de fontanería'
         ],
-        // Colombia, Peru, Chile (generic Spanish)
+        // Colombia, Peru, Chile (generic Spanish) - 5 most effective terms
         'colombia': [
             'ferretería',
             'materiales de construcción',
             'depósito de materiales',
             'pinturas',
-            'tienda de pinturas',
             'materiales de plomería'
         ],
         'peru': [
@@ -268,7 +233,6 @@ function getSearchKeywords(countryName) {
             'materiales de construcción',
             'depósito de materiales',
             'pinturas',
-            'tienda de pinturas',
             'materiales de plomería'
         ],
         'chile': [
@@ -276,10 +240,9 @@ function getSearchKeywords(countryName) {
             'materiales de construcción',
             'depósito de materiales',
             'pinturas',
-            'tienda de pinturas',
             'materiales de plomería'
         ],
-        // Portugal
+        // Portugal - 5 most effective terms
         'portugal': [
             'loja de ferragens',
             'materiais de construção',
@@ -335,23 +298,51 @@ async function searchTextNearby(latitude, longitude, radius, textQuery, maxResul
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[Text Search] HTTP error: ${response.status} - ${errorText}`);
+            console.error(`[Text Search] ❌ HTTP error: ${response.status} - ${errorText}`);
+            console.error(`[Text Search] Query: "${textQuery}" at [${latitude}, ${longitude}]`);
+
+            // Check for common API errors
+            if (response.status === 403) {
+                console.error(`[Text Search] 🚫 API KEY ERROR: Places API (New) may not be enabled or key is invalid`);
+            } else if (response.status === 429) {
+                console.error(`[Text Search] ⏱️  RATE LIMIT: Too many requests. Quota may be exceeded.`);
+            }
+
             return {
                 success: false,
                 error: 'Text search failed',
                 message: `HTTP ${response.status}: ${response.statusText}`,
-                details: errorText
+                details: errorText,
+                httpStatus: response.status
             };
         }
 
         const data = await response.json();
 
+        // Enhanced logging for debugging
         if (!data.places || data.places.length === 0) {
-            console.log(`[Text Search] No results for "${textQuery}"`);
+            console.log(`[Text Search] ⚠️  No results for "${textQuery}"`);
+            console.log(`[Text Search] Location: [${latitude}, ${longitude}], Radius: ${radius}m`);
+            console.log(`[Text Search] Language: ${languageCode}, Region: ${regionCode}`);
+
+            // Check if API returned an error status
+            if (data.error) {
+                console.error(`[Text Search] ❌ API Error:`, data.error);
+                return {
+                    success: false,
+                    error: 'Google API error',
+                    message: data.error.message || 'Unknown API error',
+                    details: JSON.stringify(data.error),
+                    found: 0,
+                    stores: []
+                };
+            }
+
             return {
                 success: true,
                 found: 0,
-                stores: []
+                stores: [],
+                noResults: true
             };
         }
 
@@ -411,6 +402,8 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
     const allStores = [];
     const seenPlaceIds = new Set();
     let totalApiCalls = 0;
+    const errors = [];
+    let noResultsCount = 0;
 
     // Calculate results per keyword (distribute evenly, with minimum of 3 per keyword)
     const resultsPerKeyword = Math.max(3, Math.ceil(maxResults / keywords.length));
@@ -435,11 +428,19 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
         totalApiCalls++;
 
         if (!result.success) {
-            console.warn(`[Keyword Search] Failed to search "${keyword}": ${result.message}`);
+            console.warn(`[Keyword Search] ❌ Failed to search "${keyword}": ${result.message}`);
+            errors.push({
+                keyword: keyword,
+                error: result.message,
+                httpStatus: result.httpStatus,
+                details: result.details
+            });
+            // Continue to try other keywords even if one fails
             continue;
         }
 
         if (result.found === 0) {
+            noResultsCount++;
             console.log(`[Keyword Search] "${keyword}": 0 results`);
             continue;
         }
@@ -464,7 +465,27 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
     const finalStores = allStores.slice(0, maxResults);
 
     console.log(`[Keyword Search] ✅ Complete: ${finalStores.length} unique stores from ${totalApiCalls} API calls`);
+    console.log(`[Keyword Search] No results: ${noResultsCount}/${keywords.length} keywords`);
+    if (errors.length > 0) {
+        console.error(`[Keyword Search] ⚠️  ${errors.length} API errors occurred`);
+        errors.forEach(err => {
+            console.error(`[Keyword Search]   - "${err.keyword}": ${err.error} (HTTP ${err.httpStatus || 'N/A'})`);
+        });
+    }
     console.log(`[Keyword Search] Estimated cost: $${(totalApiCalls * 0.032).toFixed(4)}`);
+
+    // If ALL keywords failed or returned 0 results, provide diagnostic info
+    if (finalStores.length === 0 && totalApiCalls > 0) {
+        console.error(`[Keyword Search] 🚨 DIAGNOSTIC: All ${totalApiCalls} API calls returned 0 stores`);
+        console.error(`[Keyword Search] Location: [${latitude}, ${longitude}], Radius: ${radius}m`);
+        console.error(`[Keyword Search] Country: ${countryName} (${countryConfig.code}/${countryConfig.language})`);
+
+        if (errors.length > 0) {
+            console.error(`[Keyword Search] Possible cause: API errors - ${errors[0].error}`);
+        } else if (noResultsCount === keywords.length) {
+            console.error(`[Keyword Search] Possible cause: No stores in this area, or coordinates are invalid`);
+        }
+    }
 
     return {
         success: true,
@@ -472,9 +493,12 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
         stores: finalStores,
         metadata: {
             keywords_searched: totalApiCalls,
+            keywords_with_no_results: noResultsCount,
+            keywords_with_errors: errors.length,
             duplicates_removed: allStores.length - finalStores.length,
             api_calls: totalApiCalls,
-            estimated_cost: (totalApiCalls * 0.032).toFixed(4)
+            estimated_cost: (totalApiCalls * 0.032).toFixed(4),
+            errors: errors.length > 0 ? errors : undefined
         }
     };
 }
@@ -526,22 +550,34 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
  * @param {Array} existingPlaceIds - Place IDs already in database (for duplicate prevention)
  * @param {Array} zones - Custom zones to search (if not provided, uses Rio zones)
  * @param {string} countryName - Country name for language/region settings
+ * @param {number} maxNeighborhoods - Maximum neighborhoods to search (for timeout prevention, default: 5)
  */
-export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil') {
+export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil', maxNeighborhoods = 5) {
     // Use provided zones or fall back to Rio zones for backward compatibility
     const searchZones = zones || RIO_SEARCH_ZONES;
 
     const allStores = [];
     let apiCallsUsed = 0;
     let storesSkipped = 0;
+    let zonesSearched = 0;
 
     console.log(`[Zone Search] Starting search across ${searchZones.length} zones in ${countryName}`);
     console.log(`[Zone Search] Max stores: ${maxStores}`);
+    console.log(`[Zone Search] Max neighborhoods: ${maxNeighborhoods}`);
     console.log(`[Zone Search] Existing Place IDs to skip: ${existingPlaceIds.length}`);
 
     for (const zone of searchZones) {
+        zonesSearched++;
+
+        // Check both store limit and neighborhood limit
         if (allStores.length >= maxStores) {
             console.log(`[Zone Search] Reached max stores limit (${maxStores})`);
+            break;
+        }
+
+        if (zonesSearched > maxNeighborhoods) {
+            console.log(`[Zone Search] Reached max neighborhoods limit (${maxNeighborhoods})`);
+            console.log(`[Zone Search] This prevents function timeout. Run again to continue.`);
             break;
         }
 
@@ -565,15 +601,27 @@ export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zon
             countryName
         );
 
-        apiCallsUsed++;
+        // CRITICAL FIX: Track actual API calls made (keyword search makes multiple calls)
+        const actualApiCalls = result.metadata?.api_calls || 1;
+        apiCallsUsed += actualApiCalls;
+        console.log(`[Zone Search] API calls for ${name}: ${actualApiCalls} (total so far: ${apiCallsUsed})`);
 
         if (!result.success) {
             console.error(`[Zone Search] ⚠️  Failed to search ${name}: ${result.message}`);
+            if (result.metadata?.errors && result.metadata.errors.length > 0) {
+                console.error(`[Zone Search] First error: ${result.metadata.errors[0].error}`);
+            }
             continue;
         }
 
         if (result.found === 0) {
             console.log(`[Zone Search] No stores found in ${name}`);
+            if (result.metadata?.keywords_with_no_results) {
+                console.log(`[Zone Search] ${result.metadata.keywords_with_no_results} keywords returned 0 results`);
+            }
+            if (result.metadata?.keywords_with_errors) {
+                console.warn(`[Zone Search] ${result.metadata.keywords_with_errors} keywords had errors`);
+            }
             continue;
         }
 
@@ -599,19 +647,43 @@ export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zon
         await new Promise(resolve => setTimeout(resolve, 100));
     }
 
+    const remainingNeighborhoods = searchZones.length - zonesSearched;
+    const hitNeighborhoodLimit = zonesSearched >= maxNeighborhoods && remainingNeighborhoods > 0;
+
     console.log(`\n[Zone Search] ✅ Search complete`);
+    console.log(`[Zone Search] Neighborhoods searched: ${zonesSearched}/${searchZones.length}`);
+    if (remainingNeighborhoods > 0) {
+        console.log(`[Zone Search] ⚠️  ${remainingNeighborhoods} neighborhoods not searched (run again to continue)`);
+    }
     console.log(`[Zone Search] Total stores found: ${allStores.length}`);
     console.log(`[Zone Search] Stores skipped (duplicates): ${storesSkipped}`);
-    console.log(`[Zone Search] API calls used: ${apiCallsUsed}`);
+    console.log(`[Zone Search] Total API calls used: ${apiCallsUsed}`);
+    console.log(`[Zone Search] Avg API calls per neighborhood: ${zonesSearched > 0 ? (apiCallsUsed / zonesSearched).toFixed(1) : 0}`);
+    console.log(`[Zone Search] Estimated cost: $${(apiCallsUsed * 0.032).toFixed(4)}`);
+
+    // Warning if 0 stores found
+    if (allStores.length === 0 && apiCallsUsed > 0) {
+        console.error(`\n[Zone Search] 🚨 WARNING: 0 stores found after ${apiCallsUsed} API calls!`);
+        console.error(`[Zone Search] This suggests an issue with:`);
+        console.error(`[Zone Search]   1. Google API key configuration (Places API New not enabled?)`);
+        console.error(`[Zone Search]   2. API quota/rate limits exceeded`);
+        console.error(`[Zone Search]   3. Invalid coordinates for neighborhoods`);
+        console.error(`[Zone Search]   4. No stores exist in this country/region`);
+        console.error(`[Zone Search]   5. Search keywords don't match local terminology`);
+    }
 
     return {
         success: true,
         stores: allStores,
         statistics: {
-            zonesSearched: Math.min(searchZones.length, apiCallsUsed),
+            zonesSearched: zonesSearched,
+            totalZones: searchZones.length,
+            remainingZones: remainingNeighborhoods,
+            hitNeighborhoodLimit: hitNeighborhoodLimit,
             storesFound: allStores.length,
             storesSkipped: storesSkipped,
             apiCallsUsed: apiCallsUsed,
+            avgApiCallsPerZone: zonesSearched > 0 ? parseFloat((apiCallsUsed / zonesSearched).toFixed(1)) : 0,
             estimatedCost: (apiCallsUsed * 0.032).toFixed(4) // $0.032 per call
         }
     };

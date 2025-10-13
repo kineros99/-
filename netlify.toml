@@ -6,6 +6,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Increase function timeout for local dev (default is 10s)
+[dev.functions]
+  "*" = { timeout = 60 }
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

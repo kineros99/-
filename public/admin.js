@@ -263,7 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 addLog('', 'info');
                 addLog(`📊 Resultados:`, 'info');
                 addLog(`   🔍 Lojas encontradas pelo Google: ${result.results.storesFoundByGoogle || 0}`, result.results.storesFoundByGoogle > 0 ? 'info' : 'error');
-                addLog(`   🏘️  Bairros pesquisados: ${result.results.neighborhoodsSearched || 0}`, 'info');
+                addLog(`   🏘️  Bairros pesquisados: ${result.results.neighborhoodsSearched || 0}/${result.results.totalNeighborhoods || 0}`, 'info');
+                if (result.results.remainingNeighborhoods > 0) {
+                    addLog(`   ⏭️  Bairros restantes: ${result.results.remainingNeighborhoods} (execute novamente para continuar)`, 'info');
+                }
                 addLog(`   🙃 Lojas adicionadas: ${result.results.storesAdded}`, result.results.storesAdded > 0 ? 'success' : 'info');
                 addLog(`   ⏭️  Lojas ignoradas (duplicadas): ${result.results.storesSkipped}`, 'info');
                 addLog(`   📞 Chamadas API: ${result.results.apiCallsUsed}`, 'info');
@@ -293,7 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-                showMessage(`✅ ${result.results.storesAdded} lojas adicionadas com sucesso para ${result.city.name}!`, 'success');
+                // Show message with continuation prompt if needed
+                if (result.results.moreAvailable && result.results.remainingNeighborhoods > 0) {
+                    showMessage(`✅ ${result.results.storesAdded} lojas adicionadas! ${result.results.remainingNeighborhoods} bairros restantes - execute novamente para continuar.`, 'success');
+                } else {
+                    showMessage(`✅ ${result.results.storesAdded} lojas adicionadas com sucesso para ${result.city.name}!`, 'success');
+                }
 
                 // Reload statistics
                 loadStatistics();
