@@ -43,7 +43,7 @@ https://console.cloud.google.com/billing
 2. Site settings → Environment variables
 3. Adicionar/Editar:
    - Key: `GOOGLE_MAPS_API_KEY`
-   - Value: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+   - Value: `YOUR_GOOGLE_MAPS_API_KEY_HERE`
 
 ---
 

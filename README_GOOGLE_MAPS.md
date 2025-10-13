@@ -28,7 +28,7 @@ Todo o código está 100% funcional. Quando você ativar o billing no Google Clo
 ```
 encarregado/
 ├── .env
-│   └── GOOGLE_MAPS_API_KEY=AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg
+│   └── GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
 │
 ├── netlify/functions/
 │   ├── auth-register.js              → Registra lojas (usa geocoding)
@@ -50,7 +50,7 @@ encarregado/
 
 ## 🔑 Sua Chave do Google Maps
 
-**Chave atual**: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+**Chave atual**: `YOUR_GOOGLE_MAPS_API_KEY_HERE` (configure no .env local)
 
 **Status**: ⏳ Válida, mas precisa de billing ativado
 
@@ -217,7 +217,7 @@ netlify dev
 2. **VOCÊ**: Configurar chave no Netlify
    - Site settings → Environment variables
    - Key: `GOOGLE_MAPS_API_KEY`
-   - Value: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+   - Value: `YOUR_GOOGLE_MAPS_API_KEY_HERE`
 
 3. **VOCÊ**: Fazer deploy
    ```bash

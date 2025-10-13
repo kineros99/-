@@ -60,7 +60,7 @@
 
 Edite o arquivo `.env`:
 ```env
-GOOGLE_MAPS_API_KEY=AIzaSyDx...sua_chave_aqui
+GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
 ```
 
 **Netlify (para produção):**
@@ -70,7 +70,7 @@ GOOGLE_MAPS_API_KEY=AIzaSyDx...sua_chave_aqui
 3. Vá em: **Site settings** → **Environment variables**
 4. Clique em **"Add a variable"**:
    - Key: `GOOGLE_MAPS_API_KEY`
-   - Value: `AIzaSyDx...sua_chave_aqui`
+   - Value: `YOUR_GOOGLE_MAPS_API_KEY_HERE`
 5. Clique em **"Create variable"**
 
 ## ✅ Testar

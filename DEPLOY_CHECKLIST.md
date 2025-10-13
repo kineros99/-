@@ -7,7 +7,7 @@
 - ✅ Todo código OpenCage removido
 - ✅ Mapa usando tiles do Google Maps
 - ✅ auth-register.js usando Google Maps
-- ✅ Chave no `.env`: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+- ✅ Chave no `.env`: `YOUR_GOOGLE_MAPS_API_KEY_HERE`
 - ✅ Sistema 100% funcional (esperando billing)
 
 ### O que FALTA:
@@ -66,10 +66,10 @@ Abra: http://localhost:8888
 2. Selecione seu site: **encarregado**
 3. Vá em: **Site settings** → **Environment variables**
 4. Você já tem `GOOGLE_MAPS_API_KEY` configurada?
-   - **SIM**: Edite e confirme que o valor é: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+   - **SIM**: Edite e confirme que o valor está correto
    - **NÃO**: Clique em "Add a variable":
      - Key: `GOOGLE_MAPS_API_KEY`
-     - Value: `AIzaSyBtortv4GqJ3tGWGtbtkWHl9T-ksxkPqyg`
+     - Value: `YOUR_GOOGLE_MAPS_API_KEY_HERE`
 5. Clique em **Save**
 
 ### Passo 5: Fazer Commit e Deploy

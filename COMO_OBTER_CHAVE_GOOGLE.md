@@ -1,6 +1,6 @@
 # ⚠️ SUA CHAVE DO GOOGLE MAPS NÃO ESTÁ FUNCIONANDO
 
-A chave que você forneceu (`AIzaSyAIExbRRpWa-df8WRFJRbRxbesmwIDBQKE`) retornou erro:
+A chave que você forneceu retornou erro:
 **"The provided API key is invalid."**
 
 ## 🔧 Como Resolver
@@ -10,7 +10,7 @@ A chave que você forneceu (`AIzaSyAIExbRRpWa-df8WRFJRbRxbesmwIDBQKE`) retornou 
 Se você já criou essa chave no Google Cloud Console:
 
 1. Acesse: https://console.cloud.google.com/apis/credentials
-2. Encontre sua API key: `AIzaSyAIExbRRpWa-df8WRFJRbRxbesmwIDBQKE`
+2. Encontre sua API key (formato: AIzaSy...)
 3. Verifique se:
    - ✅ A chave está **ativada** (não desabilitada)
    - ✅ A **Geocoding API** está habilitada no projeto
