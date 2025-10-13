@@ -79,7 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Popula o dropdown de bairros com todos os bairros únicos do banco de dados
     const populateBairrosDropdown = (lojas) => {
+        console.log('[PopulateBairros] Starting... received', lojas.length, 'lojas');
         const bairroSelect = document.getElementById('bairro-filter');
+
+        if (!bairroSelect) {
+            console.error('[PopulateBairros] ERROR: bairro-filter element not found!');
+            return;
+        }
 
         // Extrai todos os bairros únicos (remove duplicados e valores vazios)
         const bairrosUnicos = [...new Set(
@@ -87,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(loja => loja.bairro)
                 .filter(bairro => bairro && bairro.trim() !== '')
         )].sort(); // Ordena alfabeticamente
+
+        console.log('[PopulateBairros] Extracted', bairrosUnicos.length, 'unique neighborhoods');
 
         // Remove opções antigas (exceto "Todos os bairros")
         while (bairroSelect.options.length > 1) {
@@ -101,11 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
             bairroSelect.appendChild(option);
         });
 
-        console.log(`[Bairros] ${bairrosUnicos.length} bairros únicos carregados:`, bairrosUnicos);
+        console.log(`[PopulateBairros] ✓ Successfully added ${bairrosUnicos.length} neighborhoods to dropdown`);
+        console.log('[PopulateBairros] Final dropdown has', bairroSelect.options.length, 'options');
     };
 
     // Busca lojas da nossa API (Netlify Function)
     const fetchLojas = async (bairro = '') => {
+        console.log(`[FetchLojas] Starting fetch... bairro="${bairro}"`);
         const listDiv = document.getElementById('lojasList');
         listDiv.innerHTML = '<p style="color: white; text-align: center;">Carregando lojas...</p>';
         try {
@@ -113,18 +123,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `/.netlify/functions/get-lojas?bairro=${encodeURIComponent(bairro)}`
                 : '/.netlify/functions/get-lojas';
 
+            console.log(`[FetchLojas] Endpoint: ${endpoint}`);
             const response = await fetch(endpoint);
+            console.log(`[FetchLojas] Response status: ${response.status} ${response.statusText}`);
+
             if (!response.ok) throw new Error('Falha ao carregar dados.');
 
             const lojas = await response.json();
+            console.log(`[FetchLojas] Received ${lojas.length} lojas from API`);
+
             if (bairro === '') { // Apenas atualiza o cache na carga inicial
+                console.log('[FetchLojas] Initial load - updating cache and populating dropdown');
                 allLojas = lojas;
                 populateBairrosDropdown(lojas); // Popula dropdown após carregar todas as lojas
             }
             renderLojas(lojas);
 
         } catch (error) {
-            console.error('Erro ao buscar lojas:', error);
+            console.error('[FetchLojas] ERROR:', error);
             listDiv.innerHTML = '<p style="color: #ffcccc; text-align: center;">Erro ao carregar lojas.</p>';
         }
     };
@@ -298,8 +314,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => map.invalidateSize(), 400);
     };
 
-    document.getElementById('toggle-sidebar-btn').addEventListener('click', () => toggleSidebar());
-    document.getElementById('overlay').addEventListener('click', () => toggleSidebar(true));
+    console.log('[Init] Attaching toggle-sidebar-btn listener');
+    document.getElementById('toggle-sidebar-btn').addEventListener('click', () => {
+        console.log('[Toggle] Toggle button clicked');
+        toggleSidebar();
+    });
+    document.getElementById('overlay').addEventListener('click', () => {
+        console.log('[Toggle] Overlay clicked');
+        toggleSidebar(true);
+    });
 
     // Radius slider update
     const radiusSlider = document.getElementById('radius-slider');
@@ -382,13 +405,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Geolocalização do usuário
+    console.log('[Init] Attaching geolocate-btn listener');
     document.getElementById('geolocate-btn').addEventListener('click', () => {
+        console.log('[Geolocation] Button clicked');
         if (!navigator.geolocation) {
+            console.error('[Geolocation] Geolocation not supported by browser');
             alert("Geolocalização não é suportada pelo seu navegador.");
             return;
         }
+        console.log('[Geolocation] Requesting user position...');
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
+            console.log(`[Geolocation] ✓ Position received: ${latitude}, ${longitude}`);
             userLocation = { latitude, longitude }; // Store location
 
             // Remove old circle if exists
@@ -416,7 +444,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply radius filter
             filterLojas();
-        }, () => {
+        }, (error) => {
+            console.error('[Geolocation] ERROR getting position:', error);
             alert("Não foi possível obter sua localização.");
         });
     });
@@ -629,5 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- CARGA INICIAL ---
+    console.log('[Init] Starting initial data load...');
+    console.log('[Init] DOM ready, map initialized, event listeners attached');
     fetchLojas();
 });
