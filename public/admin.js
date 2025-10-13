@@ -117,18 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
 
                     if (response.ok && result.success) {
+                        // Store city data properly to avoid JSON parsing issues
+                        const cityData = result.city;
+
                         // Show the found city in dropdown
                         cityDropdown.innerHTML = `
-                            <div class="city-option" data-city='${JSON.stringify(result.city)}'>
-                                <div class="city-option-name">${result.city.name}</div>
-                                <div class="city-option-details">${result.city.state}, ${result.city.country}</div>
+                            <div class="city-option">
+                                <div class="city-option-name">${cityData.name}</div>
+                                <div class="city-option-details">${cityData.state}, ${cityData.country}</div>
+                                <div class="city-option-id" style="display:none;">${cityData.id}</div>
                             </div>
                         `;
                         cityDropdown.style.display = 'block';
 
-                        // Add click handler
+                        // Add click handler with proper city data
                         cityDropdown.querySelector('.city-option').addEventListener('click', async () => {
-                            await selectCity(result.city);
+                            await selectCity(cityData);
                         });
                     } else {
                         cityDropdown.innerHTML = `
@@ -154,6 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Select city and discover neighborhoods
         async function selectCity(city) {
+            console.log('[Admin] selectCity called with:', city);
+            console.log('[Admin] city.id:', city.id, 'type:', typeof city.id);
+
+            if (!city || !city.id) {
+                showMessage('Erro: Dados da cidade inválidos', 'error');
+                console.error('[Admin] Invalid city data:', city);
+                return;
+            }
+
             selectedCity = city;
             cityDropdown.style.display = 'none';
             citySearchInput.value = city.name;
@@ -164,13 +177,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // Discover neighborhoods for this city
+                console.log('[Admin] Calling discover-neighborhoods with cityId:', city.id);
                 const response = await fetch('/.netlify/functions/discover-neighborhoods', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cityId: city.id })
+                    body: JSON.stringify({ cityId: parseInt(city.id) })
                 });
 
                 const result = await response.json();
+                console.log('[Admin] discover-neighborhoods response:', result);
 
                 if (response.ok && result.success) {
                     neighborhoodsInfo.innerHTML = `
