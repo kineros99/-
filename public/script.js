@@ -46,22 +46,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNÇÕES DE DADOS E RENDERIZAÇÃO ---
-    
+
+    // Popula o dropdown de bairros com todos os bairros únicos do banco de dados
+    const populateBairrosDropdown = (lojas) => {
+        const bairroSelect = document.getElementById('bairro-filter');
+
+        // Extrai todos os bairros únicos (remove duplicados e valores vazios)
+        const bairrosUnicos = [...new Set(
+            lojas
+                .map(loja => loja.bairro)
+                .filter(bairro => bairro && bairro.trim() !== '')
+        )].sort(); // Ordena alfabeticamente
+
+        // Remove opções antigas (exceto "Todos os bairros")
+        while (bairroSelect.options.length > 1) {
+            bairroSelect.remove(1);
+        }
+
+        // Adiciona cada bairro único como opção
+        bairrosUnicos.forEach(bairro => {
+            const option = document.createElement('option');
+            option.value = bairro;
+            option.textContent = bairro;
+            bairroSelect.appendChild(option);
+        });
+
+        console.log(`[Bairros] ${bairrosUnicos.length} bairros únicos carregados:`, bairrosUnicos);
+    };
+
     // Busca lojas da nossa API (Netlify Function)
     const fetchLojas = async (bairro = '') => {
         const listDiv = document.getElementById('lojasList');
         listDiv.innerHTML = '<p style="color: white; text-align: center;">Carregando lojas...</p>';
         try {
-            const endpoint = bairro 
+            const endpoint = bairro
                 ? `/.netlify/functions/get-lojas?bairro=${encodeURIComponent(bairro)}`
                 : '/.netlify/functions/get-lojas';
-            
+
             const response = await fetch(endpoint);
             if (!response.ok) throw new Error('Falha ao carregar dados.');
-            
+
             const lojas = await response.json();
             if (bairro === '') { // Apenas atualiza o cache na carga inicial
                 allLojas = lojas;
+                populateBairrosDropdown(lojas); // Popula dropdown após carregar todas as lojas
             }
             renderLojas(lojas);
 
