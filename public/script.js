@@ -11,12 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(map);
 
-    // REMOVED CLUSTERING - Each pin will show exactly where it should be
-    // const markersLayer = L.markerClusterGroup();
-    // map.addLayer(markersLayer);
-
-    // Create a layer group for markers (no clustering)
-    const markersLayer = L.layerGroup().addTo(map);
+    // Enable clustering for better performance with many markers
+    const markersLayer = L.markerClusterGroup({
+        maxClusterRadius: 50, // Cluster markers within 50 pixels
+        spiderfyOnMaxZoom: true, // Show all markers when fully zoomed in
+        showCoverageOnHover: false, // Don't show cluster coverage area on hover
+        zoomToBoundsOnClick: true // Zoom in when clicking a cluster
+    });
+    map.addLayer(markersLayer);
     
     // Cache local para todas as lojas
     let allLojas = [];
