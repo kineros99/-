@@ -262,11 +262,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 addLog(`🌍 Cidade: ${result.city.name}, ${result.city.state}, ${result.city.country}`, 'info');
                 addLog('', 'info');
                 addLog(`📊 Resultados:`, 'info');
-                addLog(`   🙃 Lojas adicionadas: ${result.results.storesAdded}`, 'success');
+                addLog(`   🔍 Lojas encontradas pelo Google: ${result.results.storesFoundByGoogle || 0}`, result.results.storesFoundByGoogle > 0 ? 'info' : 'error');
+                addLog(`   🏘️  Bairros pesquisados: ${result.results.neighborhoodsSearched || 0}`, 'info');
+                addLog(`   🙃 Lojas adicionadas: ${result.results.storesAdded}`, result.results.storesAdded > 0 ? 'success' : 'info');
                 addLog(`   ⏭️  Lojas ignoradas (duplicadas): ${result.results.storesSkipped}`, 'info');
                 addLog(`   📞 Chamadas API: ${result.results.apiCallsUsed}`, 'info');
                 addLog(`   💰 Custo estimado: ${result.results.estimatedCost}`, 'info');
                 addLog(`   ⏱️  Tempo de execução: ${(result.results.executionTimeMs / 1000).toFixed(2)}s`, 'info');
+
+                // Add explanation if no stores found
+                if (result.results.storesFoundByGoogle === 0) {
+                    addLog('', 'info');
+                    addLog(`⚠️  ATENÇÃO: Google Places API não encontrou lojas nesta área.`, 'error');
+                    addLog(`   Possíveis razões:`, 'info');
+                    addLog(`   - Área sem lojas de construção cadastradas no Google`, 'info');
+                    addLog(`   - País diferente precisa de termos de busca adaptados`, 'info');
+                    addLog(`   - Coordenadas dos bairros podem estar incorretas`, 'info');
+                }
                 addLog('', 'info');
                 addLog(`📈 Estatísticas atualizadas:`, 'info');
                 addLog(`   🙂 Usuários: ${result.statistics.userAddedCount}`, 'info');

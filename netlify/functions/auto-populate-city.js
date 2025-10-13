@@ -284,6 +284,8 @@ export const handler = async (event) => {
                 results: {
                     storesAdded: storesAdded,
                     storesSkipped: statistics.storesSkipped,
+                    storesFoundByGoogle: statistics.storesFound,
+                    neighborhoodsSearched: neighborhoods.length,
                     apiCallsUsed: statistics.apiCallsUsed,
                     estimatedCost: `$${statistics.estimatedCost}`,
                     executionTimeMs: executionTime
