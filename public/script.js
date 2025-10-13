@@ -11,6 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(map);
 
+    // Force Leaflet to recalculate map size after DOM is fully rendered
+    // This is needed because the sidebar is position:fixed which can affect initial layout calculations
+    setTimeout(() => {
+        map.invalidateSize();
+        console.log('[Map] Map size recalculated after initialization');
+    }, 100);
+
     // Enable clustering for better performance with many markers
     const markersLayer = L.markerClusterGroup({
         maxClusterRadius: 50, // Cluster markers within 50 pixels
