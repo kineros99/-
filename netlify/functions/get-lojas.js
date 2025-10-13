@@ -13,7 +13,7 @@ export const handler = async (event) => {
     if (bairro && source && source !== 'all') {
       // Filter by both neighborhood and source
       lojas = await sql`
-        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified
+        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified, store_category
         FROM lojas
         WHERE bairro ILIKE ${bairro}
         AND source = ${source}
@@ -22,7 +22,7 @@ export const handler = async (event) => {
     } else if (bairro) {
       // Filter by neighborhood only
       lojas = await sql`
-        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified
+        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified, store_category
         FROM lojas
         WHERE bairro ILIKE ${bairro}
         ORDER BY nome
@@ -30,7 +30,7 @@ export const handler = async (event) => {
     } else if (source && source !== 'all') {
       // Filter by source only
       lojas = await sql`
-        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified
+        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified, store_category
         FROM lojas
         WHERE source = ${source}
         ORDER BY nome
@@ -38,7 +38,7 @@ export const handler = async (event) => {
     } else {
       // Return all stores
       lojas = await sql`
-        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified
+        SELECT id, nome, endereco, telefone, website, latitude, longitude, bairro, categoria, source, user_verified, store_category
         FROM lojas
         ORDER BY nome
       `;

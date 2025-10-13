@@ -188,7 +188,8 @@ export const handler = async (event) => {
                         bairro,
                         categoria,
                         source,
-                        google_place_id
+                        google_place_id,
+                        store_category
                     )
                     VALUES (
                         1,
@@ -201,7 +202,8 @@ export const handler = async (event) => {
                         ${store.bairro},
                         ${store.categoria},
                         'auto',
-                        ${store.google_place_id}
+                        ${store.google_place_id},
+                        ${store.store_category || 'unknown'}
                     )
                     ON CONFLICT (google_place_id) DO NOTHING
                 `;

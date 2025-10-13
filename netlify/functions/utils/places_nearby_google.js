@@ -64,6 +64,52 @@ const RIO_SEARCH_ZONES = [
 ];
 
 /**
+ * Detect store category based on name and types
+ * Categories: paint, lumber, plumbing, hardware, general, unknown
+ */
+function detectStoreCategory(storeName, storeTypes = []) {
+    const name = storeName.toLowerCase();
+
+    // Paint stores (Tintas)
+    const paintKeywords = ['tinta', 'paint', 'pintura', 'verniz', 'esmalte', 'sherwin', 'coral', 'suvinil'];
+    if (paintKeywords.some(keyword => name.includes(keyword))) {
+        return 'paint';
+    }
+
+    // Lumber/Wood stores (Madeira)
+    const lumberKeywords = ['madeira', 'lumber', 'wood', 'compensado', 'mdf', 'marcenaria', 'serralheria'];
+    if (lumberKeywords.some(keyword => name.includes(keyword))) {
+        return 'lumber';
+    }
+
+    // Plumbing stores (Hidráulica)
+    const plumbingKeywords = ['hidraulica', 'hidráulica', 'plumbing', 'encanamento', 'tubos', 'cano', 'tigre', 'amanco'];
+    if (plumbingKeywords.some(keyword => name.includes(keyword))) {
+        return 'plumbing';
+    }
+
+    // Hardware/Tools stores (Ferragens)
+    const hardwareKeywords = ['ferragem', 'ferramenta', 'hardware', 'tool', 'parafuso', 'prego'];
+    if (hardwareKeywords.some(keyword => name.includes(keyword))) {
+        return 'hardware';
+    }
+
+    // General construction stores (Geral)
+    const generalKeywords = ['material', 'construção', 'construcao', 'building', 'construction', 'depot', 'telhanorte', 'leroy'];
+    if (generalKeywords.some(keyword => name.includes(keyword))) {
+        return 'general';
+    }
+
+    // Check if store types indicate it's a hardware/home improvement store
+    if (storeTypes.includes('hardware_store') || storeTypes.includes('home_improvement_store')) {
+        return 'general';
+    }
+
+    // Default: unknown
+    return 'unknown';
+}
+
+/**
  * Map country names to ISO codes and language codes
  */
 function getCountryConfig(countryName) {
@@ -114,7 +160,7 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
                 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.nationalPhoneNumber,places.websiteUri,places.businessStatus,places.types'
             },
             body: JSON.stringify({
-                includedTypes: ['hardware_store', 'home_goods_store'],
+                includedTypes: ['hardware_store', 'home_improvement_store'],
                 maxResultCount: maxResults,
                 locationRestriction: {
                     circle: {
@@ -153,18 +199,25 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
         }
 
         // Format the results
-        const stores = data.places.map(place => ({
-            google_place_id: place.id.replace('places/', ''), // Remove prefix
-            nome: place.displayName?.text || 'Sem nome',
-            endereco: place.formattedAddress || '',
-            telefone: place.nationalPhoneNumber || null,
-            website: place.websiteUri || null,
-            latitude: place.location?.latitude || null,
-            longitude: place.location?.longitude || null,
-            business_status: place.businessStatus || 'UNKNOWN',
-            types: place.types || [],
-            categoria: 'Material de Construção'
-        }));
+        const stores = data.places.map(place => {
+            const storeName = place.displayName?.text || 'Sem nome';
+            const storeTypes = place.types || [];
+            const storeCategory = detectStoreCategory(storeName, storeTypes);
+
+            return {
+                google_place_id: place.id.replace('places/', ''), // Remove prefix
+                nome: storeName,
+                endereco: place.formattedAddress || '',
+                telefone: place.nationalPhoneNumber || null,
+                website: place.websiteUri || null,
+                latitude: place.location?.latitude || null,
+                longitude: place.location?.longitude || null,
+                business_status: place.businessStatus || 'UNKNOWN',
+                types: storeTypes,
+                categoria: 'Material de Construção',
+                store_category: storeCategory
+            };
+        });
 
         console.log(`[Nearby Search] ✓ Found ${stores.length} stores`);
 

@@ -135,18 +135,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 console.log(`[Map] Adding marker ${index + 1}: ${loja.nome} at [${lat}, ${lng}]`);
 
-                // Create custom icon with different colors for different neighborhoods
-                const iconColors = {
-                    'Ipanema': 'blue',
-                    'Copacabana': 'green',
-                    'Botafogo': 'red',
-                    'Gávea': 'orange'
+                // Create custom icon with different colors based on store category
+                const categoryColors = {
+                    'paint': 'red',        // 🎨 Tintas
+                    'lumber': 'orange',    // 🪵 Madeira
+                    'plumbing': 'blue',    // 🔧 Hidráulica
+                    'hardware': 'yellow',  // 🔨 Ferragens
+                    'general': 'green',    // 🏗️ Geral
+                    'unknown': 'grey'      // ❓ Indefinido
                 };
 
-                const iconColor = iconColors[loja.bairro] || 'blue';
+                const categoryIcons = {
+                    'paint': '🎨',
+                    'lumber': '🪵',
+                    'plumbing': '🔧',
+                    'hardware': '🔨',
+                    'general': '🏗️',
+                    'unknown': '❓'
+                };
+
+                const categoryNames = {
+                    'paint': 'Tintas',
+                    'lumber': 'Madeira',
+                    'plumbing': 'Hidráulica',
+                    'hardware': 'Ferragens',
+                    'general': 'Material de Construção',
+                    'unknown': 'Não categorizado'
+                };
+
+                const storeCategory = loja.store_category || 'unknown';
+                const iconColor = categoryColors[storeCategory];
                 const customIcon = L.icon({
                     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png`,
                     iconSize: [25, 41],
                     iconAnchor: [12, 41],
                     popupAnchor: [1, -34],
@@ -158,10 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const popupContent = `
                     <div style="min-width: 200px;">
                         <b>${loja.nome}</b><br>
+                        ${categoryIcons[storeCategory]} <strong>${categoryNames[storeCategory]}</strong><br>
                         ${loja.endereco}<br>
                         ${loja.bairro ? `📍 ${loja.bairro}<br>` : ''}
                         ${loja.telefone ? `📞 ${loja.telefone}<br>` : ''}
-                        ${loja.categoria ? `🏷️ ${loja.categoria}` : ''}
                         <br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>
                     </div>
                 `;
@@ -250,10 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggle-sidebar-btn').addEventListener('click', () => toggleSidebar());
     document.getElementById('overlay').addEventListener('click', () => toggleSidebar(true));
 
-    // Função para filtrar lojas localmente por busca, bairro e fonte
+    // Função para filtrar lojas localmente por busca, bairro, categoria e fonte
     const filterLojas = () => {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const bairroFilter = document.getElementById('bairro-filter').value.toLowerCase();
+        const categoryFilter = document.getElementById('category-filter').value;
         const sourceFilter = document.getElementById('source-filter').value;
 
         const filteredLojas = allLojas.filter(loja => {
@@ -265,10 +287,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchBairro = !bairroFilter ||
                 (loja.bairro && loja.bairro.toLowerCase().includes(bairroFilter));
 
+            const matchCategory = categoryFilter === 'all' ||
+                (loja.store_category || 'unknown') === categoryFilter;
+
             const matchSource = sourceFilter === 'all' ||
                 loja.source === sourceFilter;
 
-            return matchSearch && matchBairro && matchSource;
+            return matchSearch && matchBairro && matchCategory && matchSource;
         });
 
         renderLojas(filteredLojas);
@@ -295,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reset-btn').addEventListener('click', () => {
         document.getElementById('bairro-filter').value = '';
         document.getElementById('searchInput').value = '';
+        document.getElementById('category-filter').value = 'all';
         document.getElementById('source-filter').value = 'all';
         renderLojas(allLojas); // Renderiza a partir do cache
         map.setView([-22.9068, -43.1729], 12);
