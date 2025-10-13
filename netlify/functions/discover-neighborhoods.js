@@ -130,12 +130,23 @@ export const handler = async (event) => {
             console.log(`[Discover Neighborhoods] No neighborhoods found for ${city.name}`);
 
             // Create a default central neighborhood
-            const defaultNeighborhood = await sql`
+            let defaultNeighborhood = await sql`
                 INSERT INTO neighborhoods (city_id, name, center_lat, center_lng, radius, apuration_count)
                 VALUES (${cityId}, 'Centro', ${city.center_lat}, ${city.center_lng}, 3000, 0)
                 ON CONFLICT (city_id, name) DO NOTHING
                 RETURNING id, name, center_lat, center_lng, radius, apuration_count
             `;
+
+            // If INSERT didn't return anything (due to conflict), fetch the existing row
+            if (defaultNeighborhood.length === 0) {
+                console.log(`[Discover Neighborhoods] Centro already exists, fetching existing record`);
+                defaultNeighborhood = await sql`
+                    SELECT id, name, center_lat, center_lng, radius, apuration_count
+                    FROM neighborhoods
+                    WHERE city_id = ${cityId} AND name = 'Centro'
+                    LIMIT 1
+                `;
+            }
 
             return {
                 statusCode: 200,
@@ -211,12 +222,23 @@ export const handler = async (event) => {
 
         // If no neighborhoods were successfully inserted, create a default one
         if (insertedNeighborhoods.length === 0) {
-            const defaultNeighborhood = await sql`
+            let defaultNeighborhood = await sql`
                 INSERT INTO neighborhoods (city_id, name, center_lat, center_lng, radius, apuration_count)
                 VALUES (${cityId}, 'Centro', ${city.center_lat}, ${city.center_lng}, 3000, 0)
                 ON CONFLICT (city_id, name) DO NOTHING
                 RETURNING id, name, center_lat, center_lng, radius, apuration_count
             `;
+
+            // If INSERT didn't return anything (due to conflict), fetch the existing row
+            if (defaultNeighborhood.length === 0) {
+                console.log(`[Discover Neighborhoods] Centro already exists, fetching existing record`);
+                defaultNeighborhood = await sql`
+                    SELECT id, name, center_lat, center_lng, radius, apuration_count
+                    FROM neighborhoods
+                    WHERE city_id = ${cityId} AND name = 'Centro'
+                    LIMIT 1
+                `;
+            }
 
             insertedNeighborhoods.push({
                 id: defaultNeighborhood[0].id,
