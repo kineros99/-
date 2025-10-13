@@ -1,8 +1,22 @@
 {
-  "name": "mapadaslojas",
+  "name": "encarregado",
   "version": "1.0.0",
-  "description": "Mapa de lojas - Netlify Functions + Neon",
+  "description": "encarregado - Netlify Functions + Neon",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step defined'",
+    "start": "netlify dev",
+    "db:init": "node tools/scripts/init_and_seed.js",
+    "db:setup": "node tools/scripts/init_and_seed.js",
+    "db:verify": "node tools/scripts/verify_db.js",
+    "test:geocoding": "node tools/scripts/test_geocoding.js"
+  },
   "dependencies": {
-    "@netlify/neon": "^1.1.0"
+    "@netlify/neon": "^0.1.0",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
   }
 }

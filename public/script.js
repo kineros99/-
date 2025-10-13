@@ -1,18 +1,47 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- INICIALIZAÇÃO DO MAPA ---
-    const map = L.map('map').setView([-22.9068, -43.1729], 12); // Centro do RJ
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+    const map = L.map('map').setView([-22.9068, -43.1729], 13); // Centro do RJ (zoom 13 para melhor visualização)
+
+    // Using Google Maps tiles (Roadmap style)
+    // Note: This is a free-to-use tile layer that doesn't require API key
+    // For production, consider using official Google Maps JavaScript API
+    L.tileLayer('https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}', {
+        attribution: '© Google Maps',
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(map);
-    const markersLayer = L.markerClusterGroup();
-    map.addLayer(markersLayer);
+
+    // REMOVED CLUSTERING - Each pin will show exactly where it should be
+    // const markersLayer = L.markerClusterGroup();
+    // map.addLayer(markersLayer);
+
+    // Create a layer group for markers (no clustering)
+    const markersLayer = L.layerGroup().addTo(map);
     
     // Cache local para todas as lojas
     let allLojas = [];
+    let userLocation = null; // Store user's location
     const userLocationMarker = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
     });
+
+    // Function to show route to a loja
+    const showRoute = (destLat, destLng, lojaName) => {
+        if (!userLocation) {
+            alert("Primeiro localize sua posição usando o botão 📍 Minha Localização!");
+            return;
+        }
+
+        // Open Google Maps with directions
+        const origin = `${userLocation.latitude},${userLocation.longitude}`;
+        const destination = `${destLat},${destLng}`;
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+
+        window.open(url, '_blank');
+
+        console.log(`[Route] Opening directions to ${lojaName}`);
+    };
 
     // --- FUNÇÕES DE DADOS E RENDERIZAÇÃO ---
     
@@ -43,41 +72,134 @@ document.addEventListener('DOMContentLoaded', () => {
     // Renderiza a lista de lojas na sidebar e os marcadores no mapa
     const renderLojas = (lojas) => {
         const listDiv = document.getElementById('lojasList');
+        const resultsCount = document.getElementById('resultsCount');
         listDiv.innerHTML = '';
         markersLayer.clearLayers();
+
+        // Update results counter
+        resultsCount.textContent = lojas.length;
 
         if (lojas.length === 0) {
             listDiv.innerHTML = '<p style="color: white; text-align: center;">Nenhuma loja encontrada.</p>';
             return;
         }
 
-        lojas.forEach(loja => {
+        console.log(`[Map] Rendering ${lojas.length} lojas on map`);
+
+        lojas.forEach((loja, index) => {
             // Adiciona item na lista da sidebar
             const item = document.createElement('div');
             item.className = 'loja-item';
-            item.innerHTML = `
-                <div class="loja-nome">${loja.nome}</div>
-                <div class="loja-endereco">${loja.endereco}</div>
-                ${loja.telefone ? `<div class="loja-telefone">📞 ${loja.telefone}</div>` : ''}
-            `;
-            
+
             // Adiciona marcador no mapa (se tiver coordenadas)
             if (loja.latitude && loja.longitude) {
-                const marker = L.marker([loja.latitude, loja.longitude]);
-                const popupContent = `<b>${loja.nome}</b><br>${loja.endereco}${loja.telefone ? `<br>📞 ${loja.telefone}` : ''}`;
-                marker.bindPopup(popupContent);
-                
-                item.addEventListener('click', () => {
-                    map.setView([loja.latitude, loja.longitude], 16);
-                    marker.openPopup();
-                    if (window.innerWidth <= 768) {
-                        toggleSidebar(true); // Esconde a sidebar em mobile
-                    }
+                const lat = parseFloat(loja.latitude);
+                const lng = parseFloat(loja.longitude);
+
+                // Validate coordinates
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.error(`[Map] Invalid coordinates for ${loja.nome}: lat=${loja.latitude}, lng=${loja.longitude}`);
+                    listDiv.appendChild(item);
+                    return;
+                }
+
+                console.log(`[Map] Adding marker ${index + 1}: ${loja.nome} at [${lat}, ${lng}]`);
+
+                // Create custom icon with different colors for different neighborhoods
+                const iconColors = {
+                    'Ipanema': 'blue',
+                    'Copacabana': 'green',
+                    'Botafogo': 'red',
+                    'Gávea': 'orange'
+                };
+
+                const iconColor = iconColors[loja.bairro] || 'blue';
+                const customIcon = L.icon({
+                    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
                 });
+
+                const marker = L.marker([lat, lng], { icon: customIcon });
+
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <b>${loja.nome}</b><br>
+                        ${loja.endereco}<br>
+                        ${loja.bairro ? `📍 ${loja.bairro}<br>` : ''}
+                        ${loja.telefone ? `📞 ${loja.telefone}<br>` : ''}
+                        ${loja.categoria ? `🏷️ ${loja.categoria}` : ''}
+                        <br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+
+                // Determine source badge
+                let sourceBadge, sourceTitle;
+                if (loja.source === 'verified') {
+                    sourceBadge = '🧵';
+                    sourceTitle = 'Verificada por usuário (Google + Usuário)';
+                } else if (loja.source === 'auto') {
+                    sourceBadge = '🙃';
+                    sourceTitle = 'Auto-populada (Google Places)';
+                } else {
+                    sourceBadge = '🙂';
+                    sourceTitle = 'Adicionada por usuário';
+                }
+
+                // Create loja item content with action buttons
+                item.innerHTML = `
+                    <div class="loja-nome">
+                        <span class="source-badge" title="${sourceTitle}">${sourceBadge}</span>
+                        ${loja.nome}
+                    </div>
+                    <div class="loja-endereco">${loja.endereco}</div>
+                    ${loja.telefone ? `<div class="loja-telefone">📞 ${loja.telefone}</div>` : ''}
+                    <div class="loja-actions">
+                        <button class="action-btn" data-loja-id="${index}" data-action="route">
+                            <i class="fas fa-route"></i> Rota
+                        </button>
+                        <button class="action-btn" data-loja-id="${index}" data-action="view">
+                            <i class="fas fa-map-marker-alt"></i> Ver no Mapa
+                        </button>
+                    </div>
+                `;
+
+                // Add event listeners for action buttons
+                setTimeout(() => {
+                    const routeBtn = item.querySelector('[data-action="route"]');
+                    const viewBtn = item.querySelector('[data-action="view"]');
+
+                    if (routeBtn) {
+                        routeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showRoute(lat, lng, loja.nome);
+                        });
+                    }
+
+                    if (viewBtn) {
+                        viewBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            map.setView([lat, lng], 17);
+                            marker.openPopup();
+                            if (window.innerWidth <= 768) {
+                                toggleSidebar(true);
+                            }
+                        });
+                    }
+                }, 0);
+
                 markersLayer.addLayer(marker);
+            } else {
+                console.warn(`[Map] No coordinates for ${loja.nome}`);
             }
             listDiv.appendChild(item);
         });
+
+        console.log(`[Map] Total markers added: ${markersLayer.getLayers().length}`);
     };
 
     // --- LÓGICA DA UI ---
@@ -97,15 +219,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('toggle-sidebar-btn').addEventListener('click', () => toggleSidebar());
     document.getElementById('overlay').addEventListener('click', () => toggleSidebar(true));
-    
+
+    // Função para filtrar lojas localmente por busca, bairro e fonte
+    const filterLojas = () => {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const bairroFilter = document.getElementById('bairro-filter').value.toLowerCase();
+        const sourceFilter = document.getElementById('source-filter').value;
+
+        const filteredLojas = allLojas.filter(loja => {
+            const matchSearch = !searchTerm ||
+                loja.nome.toLowerCase().includes(searchTerm) ||
+                loja.endereco.toLowerCase().includes(searchTerm) ||
+                (loja.bairro && loja.bairro.toLowerCase().includes(searchTerm));
+
+            const matchBairro = !bairroFilter ||
+                (loja.bairro && loja.bairro.toLowerCase().includes(bairroFilter));
+
+            const matchSource = sourceFilter === 'all' ||
+                loja.source === sourceFilter;
+
+            return matchSearch && matchBairro && matchSource;
+        });
+
+        renderLojas(filteredLojas);
+
+        // Adjust map view to show filtered results
+        if (filteredLojas.length > 0) {
+            const coords = filteredLojas
+                .filter(l => l.latitude && l.longitude)
+                .map(l => [parseFloat(l.latitude), parseFloat(l.longitude)]);
+            if (coords.length > 0) {
+                map.fitBounds(coords, { padding: [50, 50] });
+            }
+        }
+    };
+
+    // Search input - real-time filtering
+    document.getElementById('searchInput').addEventListener('input', filterLojas);
+
     // Filtro de lojas
     document.getElementById('filter-btn').addEventListener('click', () => {
-        const bairro = document.getElementById('bairro-filter').value;
-        fetchLojas(bairro);
+        filterLojas();
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
         document.getElementById('bairro-filter').value = '';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('source-filter').value = 'all';
         renderLojas(allLojas); // Renderiza a partir do cache
         map.setView([-22.9068, -43.1729], 12);
     });
@@ -118,11 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         navigator.geolocation.getCurrentPosition(position => {
             const { latitude, longitude } = position.coords;
+            userLocation = { latitude, longitude }; // Store location
             map.setView([latitude, longitude], 15);
             L.marker([latitude, longitude], { icon: userLocationMarker })
                 .addTo(map)
                 .bindPopup("📍 Você está aqui")
                 .openPopup();
+            console.log(`[Geolocation] User location stored: ${latitude}, ${longitude}`);
         }, () => {
             alert("Não foi possível obter sua localização.");
         });
@@ -142,6 +304,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === modal) modal.style.display = 'none';
     };
 
+    // Variable to store pending coordinate validation
+    let pendingValidation = null;
+    let pendingGoogleData = null;
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         submitButton.disabled = true;
@@ -160,6 +326,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        // If we have a pending validation and user made a choice
+        if (pendingValidation && formData.get('coordinate_choice')) {
+            data.confirmCoordinates = formData.get('coordinate_choice');
+        }
+
+        // If user chose to use Google data
+        if (pendingGoogleData && formData.get('use_google_data')) {
+            data.useGoogleData = formData.get('use_google_data') === 'true';
+        }
+
         try {
             const response = await fetch('/.netlify/functions/auth-register', {
                 method: 'POST',
@@ -168,10 +344,138 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
 
-            if (!response.ok) throw new Error(result.message);
+            // Handle Google business found (200 status with googleBusinessFound flag)
+            if (response.ok && result.googleBusinessFound) {
+                pendingGoogleData = result;
+
+                // Show Google business data with comparison
+                formMessage.className = 'warning';
+                formMessage.innerHTML = `
+                    <strong>🎯 Encontramos um negócio cadastrado no Google!</strong><br>
+                    <p>${result.message}</p>
+
+                    <div style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-radius: 5px;">
+                        <p><strong>📊 Dados do Google:</strong></p>
+                        <p><strong>Nome:</strong> ${result.googleData.name || 'N/A'}</p>
+                        <p><strong>Telefone:</strong> ${result.googleData.phone || 'N/A'}</p>
+                        <p><strong>Website:</strong> ${result.googleData.website || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${result.googleData.businessStatus === 'OPERATIONAL' ? '✅ Operacional' : result.googleData.businessStatus}</p>
+                        <button type="button" class="coord-choice-btn" data-google-choice="true">Usar Dados do Google</button>
+                    </div>
+
+                    <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 5px;">
+                        <p><strong>📝 Seus Dados:</strong></p>
+                        <p><strong>Nome:</strong> ${result.userProvidedData.name}</p>
+                        <p><strong>Telefone:</strong> ${result.userProvidedData.phone || 'N/A'}</p>
+                        <p><strong>Website:</strong> ${result.userProvidedData.website || 'N/A'}</p>
+                        <button type="button" class="coord-choice-btn" data-google-choice="false">Usar Meus Dados</button>
+                    </div>
+                `;
+                formMessage.style.display = 'block';
+
+                // Add event listeners to choice buttons
+                document.querySelectorAll('[data-google-choice]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const useGoogle = btn.getAttribute('data-google-choice') === 'true';
+
+                        // If using Google data, pre-fill form fields
+                        if (useGoogle) {
+                            document.getElementById('nome').value = result.googleData.name || result.userProvidedData.name;
+                            document.getElementById('telefone').value = result.googleData.phone || result.userProvidedData.phone || '';
+                            document.getElementById('website').value = result.googleData.website || result.userProvidedData.website || '';
+                        }
+
+                        // Add hidden input with choice
+                        let choiceInput = document.getElementById('use_google_data');
+                        if (!choiceInput) {
+                            choiceInput = document.createElement('input');
+                            choiceInput.type = 'hidden';
+                            choiceInput.id = 'use_google_data';
+                            choiceInput.name = 'use_google_data';
+                            form.appendChild(choiceInput);
+                        }
+                        choiceInput.value = useGoogle.toString();
+
+                        // Resubmit form
+                        form.dispatchEvent(new Event('submit'));
+                    });
+                });
+
+                submitButton.disabled = false;
+                submitButton.textContent = 'Cadastrar Loja';
+                return;
+            }
+
+            // Handle coordinate validation required (409 status)
+            if (response.status === 409 && result.error === 'Coordinate validation required') {
+                pendingValidation = result.validation;
+
+                // Show validation message with options
+                formMessage.className = 'warning';
+                formMessage.innerHTML = `
+                    <strong>Validação de Coordenadas Necessária</strong><br>
+                    <p>${result.message}</p>
+                    <p><strong>Distância:</strong> ${result.validation.distanceKm} km</p>
+                    <div style="margin-top: 10px;">
+                        <p><strong>Opção 1 (Recomendado):</strong> Usar coordenadas geocodificadas automaticamente</p>
+                        <p>Lat: ${result.validation.geocoded.latitude}, Lng: ${result.validation.geocoded.longitude}</p>
+                        <p>Confiança: ${result.validation.geocoded.confidence}/10</p>
+                        <button type="button" class="coord-choice-btn" data-choice="use_geocoded">Usar Geocodificadas</button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <p><strong>Opção 2:</strong> Manter suas coordenadas fornecidas</p>
+                        <p>Lat: ${result.validation.userProvided.latitude}, Lng: ${result.validation.userProvided.longitude}</p>
+                        <button type="button" class="coord-choice-btn" data-choice="use_provided">Manter Minhas</button>
+                    </div>
+                `;
+                formMessage.style.display = 'block';
+
+                // Add event listeners to choice buttons
+                document.querySelectorAll('.coord-choice-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const choice = btn.getAttribute('data-choice');
+
+                        // Add hidden input with choice
+                        let choiceInput = document.getElementById('coordinate_choice');
+                        if (!choiceInput) {
+                            choiceInput = document.createElement('input');
+                            choiceInput.type = 'hidden';
+                            choiceInput.id = 'coordinate_choice';
+                            choiceInput.name = 'coordinate_choice';
+                            form.appendChild(choiceInput);
+                        }
+                        choiceInput.value = choice;
+
+                        // Resubmit form
+                        form.dispatchEvent(new Event('submit'));
+                    });
+                });
+
+                submitButton.disabled = false;
+                submitButton.textContent = 'Cadastrar Loja';
+                return;
+            }
+
+            if (!response.ok) throw new Error(result.message || 'Erro ao cadastrar loja');
+
+            // Success!
+            pendingValidation = null;
+            pendingGoogleData = null;
+            const coordChoice = document.getElementById('coordinate_choice');
+            if (coordChoice) coordChoice.remove();
+            const googleChoice = document.getElementById('use_google_data');
+            if (googleChoice) googleChoice.remove();
+
+            const dataSourceText = result.dataSource === 'google_places'
+                ? '📊 Dados do Google Places'
+                : '📝 Dados fornecidos pelo usuário';
 
             formMessage.className = 'success';
-            formMessage.textContent = 'Loja cadastrada com sucesso!';
+            formMessage.innerHTML = `
+                <strong>✅ Loja cadastrada com sucesso!</strong><br>
+                <p><strong>Fonte dos dados:</strong> ${dataSourceText}</p>
+                ${result.geocoding ? `<p><strong>Coordenadas:</strong> ${result.geocoding.source === 'geocoded' ? 'Geocodificadas automaticamente pelo Google Maps' : 'Fornecidas pelo usuário'}</p>` : ''}
+            `;
             formMessage.style.display = 'block';
 
             // Recarrega todas as lojas para incluir a nova
@@ -186,8 +490,10 @@ document.addEventListener('DOMContentLoaded', () => {
             formMessage.textContent = `Erro: ${error.message}`;
             formMessage.style.display = 'block';
         } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Cadastrar Loja';
+            if (!pendingValidation) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Cadastrar Loja';
+            }
         }
     });
 

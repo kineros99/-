@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Provider Navigation Test</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }
+        h1 { color: #333; text-align: center; }
+        .instructions {
+            background: #fffacd;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 1200px;
+            border-left: 4px solid #ffa500;
+            border-radius: 4px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .map-container {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .map-title {
+            background: #333;
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+        }
+        .map {
+            width: 100%;
+            height: 450px;
+        }
+        .info {
+            padding: 12px;
+            background: #f9f9f9;
+            font-size: 13px;
+            border-top: 1px solid #ddd;
+        }
+        .info strong { color: #333; }
+        .test-coords {
+            background: white;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 1200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-coords h3 { margin-top: 0; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Navigation Map Provider Test</h1>
+
+    <div class="instructions">
+        <strong>📍 Instructions:</strong><br>
+        • All maps show the SAME coordinate: Amoedo Ipanema store<br>
+        • Check which map shows the pin in the CORRECT location<br>
+        • Test "Get Directions" feature by right-clicking the map<br>
+        • Choose the provider where the pin matches the actual store location
+    </div>
+
+    <div class="test-coords">
+        <h3>Test Location</h3>
+        <strong>Store:</strong> Amoedo Ipanema<br>
+        <strong>Address:</strong> Rua Farme de Amoedo 107, Ipanema, Rio de Janeiro<br>
+        <strong>Database Coordinates:</strong> -22.98492, -43.20378<br>
+        <strong>Neighborhood:</strong> Ipanema<br>
+        <a href="https://www.google.com/maps?q=-22.98492,-43.20378" target="_blank" style="color: #1a73e8;">
+            ➜ Verify on Google Maps (opens in new tab)
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- OpenStreetMap -->
+        <div class="map-container">
+            <div class="map-title">1. OpenStreetMap (Current)</div>
+            <div id="map1" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> OpenStreetMap<br>
+                <strong>Best for:</strong> General use, most common<br>
+                <strong>Navigation:</strong> Works with routing APIs<br>
+                <strong>Cost:</strong> Free
+            </div>
+        </div>
+
+        <!-- Esri World Street Map -->
+        <div class="map-container">
+            <div class="map-title">2. Esri World Street Map</div>
+            <div id="map2" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> Esri (ArcGIS)<br>
+                <strong>Best for:</strong> Detailed streets, landmarks<br>
+                <strong>Navigation:</strong> High quality routing<br>
+                <strong>Cost:</strong> Free (with limits)
+            </div>
+        </div>
+
+        <!-- CartoDB Positron -->
+        <div class="map-container">
+            <div class="map-title">3. CartoDB Voyager (Street)</div>
+            <div id="map3" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> CartoDB (CARTO)<br>
+                <strong>Best for:</strong> Clean design, easy reading<br>
+                <strong>Navigation:</strong> Works with routing APIs<br>
+                <strong>Cost:</strong> Free
+            </div>
+        </div>
+
+        <!-- MapTiler Streets -->
+        <div class="map-container">
+            <div class="map-title">4. MapTiler Streets</div>
+            <div id="map4" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> MapTiler<br>
+                <strong>Best for:</strong> Modern design, fast loading<br>
+                <strong>Navigation:</strong> Good for navigation apps<br>
+                <strong>Cost:</strong> Free tier available
+            </div>
+        </div>
+
+        <!-- Thunderforest Transport -->
+        <div class="map-container">
+            <div class="map-title">5. Thunderforest Transport</div>
+            <div id="map5" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> Thunderforest<br>
+                <strong>Best for:</strong> Transit routes, public transport<br>
+                <strong>Navigation:</strong> Shows bus/metro routes<br>
+                <strong>Cost:</strong> Free tier available
+            </div>
+        </div>
+
+        <!-- Stamen Terrain -->
+        <div class="map-container">
+            <div class="map-title">6. Stadia Stamen Terrain</div>
+            <div id="map6" class="map"></div>
+            <div class="info">
+                <strong>Provider:</strong> Stadia Maps (Stamen)<br>
+                <strong>Best for:</strong> Clear terrain, easy to read<br>
+                <strong>Navigation:</strong> Good for urban navigation<br>
+                <strong>Cost:</strong> Free tier available
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Test coordinate: Amoedo Ipanema
+        const testLat = -22.98492;
+        const testLng = -43.20378;
+        const testName = "Amoedo Ipanema";
+        const testAddress = "Rua Farme de Amoedo 107, Ipanema, Rio de Janeiro";
+
+        // Map tile providers - Navigation focused
+        const providers = [
+            {
+                id: 'map1',
+                name: 'OpenStreetMap',
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors'
+            },
+            {
+                id: 'map2',
+                name: 'Esri World Street',
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri'
+            },
+            {
+                id: 'map3',
+                name: 'CartoDB Voyager',
+                url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                attribution: '© OpenStreetMap © CARTO'
+            },
+            {
+                id: 'map4',
+                name: 'MapTiler Streets',
+                url: 'https://api.maptiler.com/maps/streets/256/{z}/{x}/{y}.png?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+                attribution: '© MapTiler © OpenStreetMap'
+            },
+            {
+                id: 'map5',
+                name: 'Thunderforest Transport',
+                url: 'https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=get_your_own_key',
+                attribution: '© Thunderforest © OpenStreetMap'
+            },
+            {
+                id: 'map6',
+                name: 'Stadia Stamen Terrain',
+                url: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png',
+                attribution: '© Stadia Maps © Stamen Design © OpenStreetMap'
+            }
+        ];
+
+        // Create maps
+        providers.forEach((provider, index) => {
+            const map = L.map(provider.id).setView([testLat, testLng], 17);
+
+            L.tileLayer(provider.url, {
+                attribution: provider.attribution,
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add colored marker based on provider
+            const colors = ['blue', 'green', 'red', 'orange', 'violet', 'yellow'];
+            const iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${colors[index]}.png`;
+
+            const customIcon = L.icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            const marker = L.marker([testLat, testLng], { icon: customIcon }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="min-width: 200px;">
+                    <b>${testName}</b><br>
+                    ${testAddress}<br>
+                    <small>Lat: ${testLat}, Lng: ${testLng}</small><br><br>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${testLat},${testLng}"
+                       target="_blank" style="color: #1a73e8;">
+                        Get Directions (Google Maps) →
+                    </a>
+                </div>
+            `).openPopup();
+
+            // Add accuracy circle
+            L.circle([testLat, testLng], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.15,
+                radius: 30
+            }).addTo(map);
+
+            console.log(`Map ${index + 1} (${provider.name}): Initialized at ${testLat}, ${testLng}`);
+        });
+
+        console.log('='.repeat(70));
+        console.log('ALL MAPS USE THE SAME COORDINATE: ', testLat, testLng);
+        console.log('='.repeat(70));
+        console.log('WHAT TO CHECK:');
+        console.log('1. Is the pin in the correct location on the street?');
+        console.log('2. Does the pin match where Rua Farme de Amoedo 107 should be?');
+        console.log('3. Click "Get Directions" to test navigation');
+        console.log('4. Choose the provider that shows the most accurate location');
+        console.log('='.repeat(70));
+    </script>
+</body>
+</html>

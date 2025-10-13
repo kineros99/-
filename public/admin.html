@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Auto-Population | Encarregado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .control-panel h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .run-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .run-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .run-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .log-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .log-container h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #log {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .log-info {
+            color: #667eea;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .warning-box strong {
+            color: #856404;
+        }
+
+        /* Authentication Gate Styles */
+        #auth-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        #auth-gate.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .auth-box h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .auth-box p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .auth-icon {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        #main-content.visible {
+            opacity: 1;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .city-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .city-option:last-child {
+            border-bottom: none;
+        }
+
+        .city-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .city-option-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .city-option-details {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Gate -->
+    <div id="auth-gate">
+        <div class="auth-box">
+            <div class="auth-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>Autenticação Necessária</h2>
+            <p>Por favor, insira suas credenciais para acessar o painel de administração</p>
+
+            <div id="auth-message" class="message"></div>
+
+            <input
+                type="text"
+                id="auth-username"
+                class="form-input"
+                placeholder="Usuário"
+                autocomplete="off"
+            />
+
+            <input
+                type="password"
+                id="auth-password"
+                class="form-input"
+                placeholder="Senha"
+                autocomplete="off"
+            />
+
+            <button id="auth-button" class="run-button">
+                <i class="fas fa-unlock"></i>
+                <span>Entrar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <div class="container" id="main-content">
+        <div class="header">
+            <h1><i class="fas fa-cog"></i> Painel de Administração</h1>
+            <p>Auto-Population de Lojas do Google Places API</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🙂</div>
+                <div class="stat-value" id="userCount">-</div>
+                <div class="stat-label">Adicionadas por Usuários</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🙃</div>
+                <div class="stat-value" id="autoCount">-</div>
+                <div class="stat-label">Auto-Populadas</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value" id="totalCount">-</div>
+                <div class="stat-label">Total de Lojas</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h2><i class="fas fa-rocket"></i> Executar Auto-Population</h2>
+
+            <div class="warning-box">
+                <strong>⚠️ Atenção:</strong> Esta ação irá buscar até <strong>111 lojas</strong> do Google Places API.
+                Custo estimado: <strong>~$0.20</strong>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <!-- Location Selection -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">
+                    <i class="fas fa-map-marker-alt"></i> Seleção de Localização
+                </h3>
+
+                <input
+                    type="text"
+                    id="country-input"
+                    class="password-input"
+                    placeholder="País (ex: Brasil, Argentina, Peru)"
+                    autocomplete="off"
+                    value="Brasil"
+                />
+
+                <input
+                    type="text"
+                    id="state-input"
+                    class="password-input"
+                    placeholder="Estado (ex: Rio de Janeiro, São Paulo)"
+                    autocomplete="off"
+                />
+
+                <div style="position: relative;">
+                    <input
+                        type="text"
+                        id="city-search-input"
+                        class="password-input"
+                        placeholder="Digite o nome da cidade..."
+                        autocomplete="off"
+                    />
+                    <div id="city-dropdown" style="
+                        display: none;
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        border: 2px solid #667eea;
+                        border-radius: 8px;
+                        max-height: 200px;
+                        overflow-y: auto;
+                        z-index: 1000;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    "></div>
+                </div>
+
+                <div id="selected-city-info" style="
+                    display: none;
+                    background: #e7f3ff;
+                    border: 2px solid #667eea;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-top: 10px;
+                ">
+                    <strong style="color: #667eea;">Cidade Selecionada:</strong>
+                    <div id="selected-city-text" style="margin-top: 5px; font-size: 16px;"></div>
+                    <div id="neighborhoods-info" style="margin-top: 10px; color: #666; font-size: 14px;"></div>
+                </div>
+            </div>
+
+            <!-- Authentication -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">
+                    <i class="fas fa-lock"></i> Autenticação
+                </h3>
+
+                <input
+                    type="text"
+                    id="username"
+                    class="password-input"
+                    placeholder="Usuário"
+                    autocomplete="off"
+                />
+
+                <input
+                    type="password"
+                    id="password"
+                    class="password-input"
+                    placeholder="Senha"
+                    autocomplete="off"
+                />
+            </div>
+
+            <button id="runButton" class="run-button">
+                <i class="fas fa-play"></i>
+                <span>Executar Auto-Population (Max 111 Lojas)</span>
+            </button>
+        </div>
+
+        <div class="log-container">
+            <h3><i class="fas fa-terminal"></i> Log de Execução</h3>
+            <div id="log">
+                <div class="log-entry">Aguardando execução...</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="admin-scoped.html" class="back-link" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <i class="fas fa-bullseye"></i> Ir para Scoped Auto-Population
+            </a>
+        </div>
+
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Voltar para o Mapa
+        </a>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

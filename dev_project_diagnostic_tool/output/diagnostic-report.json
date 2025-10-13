@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-10-13T00:21:07.022Z",
+  "projectName": "Encarregado",
+  "projectRoot": "/Users/eros/Desktop",
+  "platform": "darwin",
+  "nodeVersion": "v24.9.0",
+  "functions": [],
+  "database": {
+    "hasEnvFile": false,
+    "hasDatabaseURL": false,
+    "hasGoogleAPIKey": false,
+    "tables": [
+      "users",
+      "lojas",
+      "cities",
+      "neighborhoods",
+      "auto_population_runs"
+    ],
+    "views": [
+      "store_statistics"
+    ],
+    "issues": [
+      {
+        "severity": "critical",
+        "message": ".env file not found",
+        "autoFix": "create-env-example"
+      },
+      {
+        "severity": "critical",
+        "message": "DATABASE_URL not configured"
+      },
+      {
+        "severity": "warning",
+        "message": "GOOGLE_MAPS_API_KEY not configured"
+      }
+    ]
+  },
+  "frontend": {
+    "files": 0,
+    "totalLines": 0,
+    "usesLeaflet": false,
+    "usesFetch": false,
+    "hasErrorHandling": false,
+    "issues": []
+  },
+  "apis": {
+    "google": {
+      "geocoding": false,
+      "places": false,
+      "textSearch": false
+    },
+    "netlify": {
+      "functions": true,
+      "neon": false
+    },
+    "issues": []
+  },
+  "issues": [
+    {
+      "category": "database",
+      "severity": "critical",
+      "message": ".env file not found",
+      "autoFix": "create-env-example"
+    },
+    {
+      "category": "database",
+      "severity": "critical",
+      "message": "DATABASE_URL not configured"
+    },
+    {
+      "category": "database",
+      "severity": "warning",
+      "message": "GOOGLE_MAPS_API_KEY not configured"
+    }
+  ],
+  "autoFixes": [],
+  "statistics": {
+    "totalFunctions": 0,
+    "totalLines": 0,
+    "criticalIssues": 2,
+    "warnings": 1,
+    "autoFixesAvailable": 1,
+    "databaseTables": 5,
+    "apiIntegrations": 0
+  },
+  "healthScore": 50,
+  "structure": {
+    "backend": [],
+    "frontend": [],
+    "database": [],
+    "config": [],
+    "tests": [],
+    "docs": []
+  }
+}

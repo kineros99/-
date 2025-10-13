@@ -1,0 +1,82 @@
+[
+  {
+    "nome": "Amoedo Ipanema",
+    "endereco": "Rua Farme de Amoedo 107, Rio de Janeiro",
+    "telefone": "(21) 2287-7000",
+    "website": null,
+    "latitude": -22.98492,
+    "longitude": -43.20378,
+    "bairro": "Ipanema",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "Abc da Construção",
+    "endereco": "Rua Farme de Amoedo 122, Rio de Janeiro",
+    "telefone": "(21) 99296-5055",
+    "website": null,
+    "latitude": -22.98522,
+    "longitude": -43.20456,
+    "bairro": "Ipanema",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "707 Materiais de Construção",
+    "endereco": "Rua Barata Ribeiro 707, lj. G, Rio de Janeiro",
+    "telefone": "(21) 2235-3379",
+    "website": null,
+    "latitude": -22.9734,
+    "longitude": -43.19349,
+    "bairro": "Copacabana",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "SIB Materiais",
+    "endereco": "Rua Visconde de Pirajá 207, lj. 314, Rio de Janeiro",
+    "telefone": "(21) 2522-1440",
+    "website": null,
+    "latitude": -22.98363,
+    "longitude": -43.19898,
+    "bairro": "Ipanema",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "Casa Mourão Materiais de Construção e Ferragens",
+    "endereco": "Rua Vinícius de Moraes 71, lj. A, Rio de Janeiro, RJ, 22411-010",
+    "telefone": "(21) 98876-8872",
+    "website": "wa.me",
+    "latitude": -22.98305,
+    "longitude": -43.2052,
+    "bairro": "Ipanema",
+    "categoria": "Loja de ferragens"
+  },
+  {
+    "nome": "Rede Citylar Material de Construção - Gávea",
+    "endereco": "Rua Marquês de São Vicente 9, lj. A, Rio de Janeiro, RJ, 22451-041",
+    "telefone": "(21) 2274-2446",
+    "website": "loja.rezendeconstrucao.com.br",
+    "latitude": -22.9741,
+    "longitude": -43.22818,
+    "bairro": "Gávea",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "Befran Materiais de Construção",
+    "endereco": "Rua Gen. Polidoro 177, lj. A e B, Rio de Janeiro, RJ, 22280-002",
+    "telefone": "(21) 98870-1000",
+    "website": "www.lojabefran.com.br",
+    "latitude": -22.95663,
+    "longitude": -43.1856,
+    "bairro": "Botafogo",
+    "categoria": "Loja de materiais de construção"
+  },
+  {
+    "nome": "Rede Citylar Material de Construção - Copacabana",
+    "endereco": "Rua Barata Ribeiro 425, Rio de Janeiro, RJ, 22040-001",
+    "telefone": "(21) 2255-3083",
+    "website": "www.redecitylar.com.br",
+    "latitude": -22.9686,
+    "longitude": -43.18732,
+    "bairro": "Copacabana",
+    "categoria": "Loja de materiais de construção"
+  }
+]

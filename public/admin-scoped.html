@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Scoped Auto-Population | Encarregado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .control-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .control-panel h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .step-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .step-section:last-child {
+            border-bottom: none;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select.form-input {
+            cursor: pointer;
+        }
+
+        .neighborhoods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .neighborhood-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e1e5e9;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .neighborhood-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .neighborhood-card.selected {
+            background: #e7f3ff;
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .neighborhood-card input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .neighborhood-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .neighborhood-info {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .limit-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .run-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .run-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .run-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .log-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .log-container h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #log {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .log-info {
+            color: #667eea;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .warning-box strong {
+            color: #856404;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .select-all-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .select-all-btn:hover {
+            background: #5568d3;
+        }
+
+        .city-search-container {
+            position: relative;
+        }
+
+        .city-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .city-dropdown.active {
+            display: block;
+        }
+
+        .city-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .city-option:last-child {
+            border-bottom: none;
+        }
+
+        .city-option:hover {
+            background: #f0f0f0;
+        }
+
+        .city-option.selected {
+            background: #e7f3ff;
+            font-weight: bold;
+        }
+
+        .city-option-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .city-option-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="admin.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Voltar para Admin Principal
+        </a>
+
+        <div class="header">
+            <h1><i class="fas fa-bullseye"></i> Scoped Auto-Population</h1>
+            <p>Apuração direcionada por cidade e bairro com limites dinâmicos</p>
+        </div>
+
+        <div class="control-panel">
+            <h2><i class="fas fa-cog"></i> Configuração da Apuração</h2>
+
+            <!-- STEP 1: Search City -->
+            <div class="step-section">
+                <div class="step-title">1️⃣ Buscar Cidade</div>
+                <div class="city-search-container">
+                    <input
+                        type="text"
+                        id="city-search"
+                        class="form-input"
+                        placeholder="Digite o nome da cidade (ex: Rio de Janeiro, São Paulo, etc.)"
+                        autocomplete="off"
+                    />
+                    <div id="city-dropdown" class="city-dropdown"></div>
+                </div>
+                <div id="selected-city-info" style="margin-top: 10px; color: #667eea; font-weight: bold; display: none;">
+                    <i class="fas fa-check-circle"></i> <span id="selected-city-name"></span>
+                </div>
+            </div>
+
+            <!-- STEP 2: Select Neighborhoods -->
+            <div class="step-section">
+                <div class="step-title">2️⃣ Selecione os Bairros</div>
+                <button id="select-all-btn" class="select-all-btn">Selecionar Todos</button>
+                <div id="neighborhoods-container" class="neighborhoods-grid">
+                    <div class="loading">Selecione uma cidade primeiro...</div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Summary -->
+            <div class="step-section">
+                <div class="step-title">3️⃣ Resumo da Apuração</div>
+                <div class="summary-box" id="summary-box">
+                    <h3>📊 Informações</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Bairros selecionados:</span>
+                        <span class="summary-value" id="summary-neighborhoods">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Limite total de lojas:</span>
+                        <span class="summary-value" id="summary-total-limit">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Custo estimado:</span>
+                        <span class="summary-value" id="summary-cost">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: Execute -->
+            <div class="step-section">
+                <div class="step-title">4️⃣ Executar Apuração</div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Atenção:</strong> Esta ação irá buscar lojas do Google Places API conforme os limites configurados.
+                    Certifique-se de selecionar os bairros corretos antes de executar.
+                </div>
+
+                <div id="message" class="message"></div>
+
+                <label for="exec-username">Usuário</label>
+                <input
+                    type="text"
+                    id="exec-username"
+                    class="form-input"
+                    placeholder="Usuário"
+                    autocomplete="off"
+                />
+
+                <label for="exec-password">Senha</label>
+                <input
+                    type="password"
+                    id="exec-password"
+                    class="form-input"
+                    placeholder="Senha"
+                    autocomplete="off"
+                />
+
+                <button id="runButton" class="run-button" disabled>
+                    <i class="fas fa-play"></i>
+                    <span>Executar Scoped Auto-Population</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="log-container">
+            <h3><i class="fas fa-terminal"></i> Log de Execução</h3>
+            <div id="log">
+                <div class="log-entry">Aguardando configuração...</div>
+            </div>
+        </div>
+
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Voltar para o Mapa
+        </a>
+    </div>
+
+    <script src="admin-scoped.js"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║          UNIVERSAL PROJECT DIAGNOSTIC TOOL                     ║
+║          Quick Start Guide (2 Minutes!)                        ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════
+SUPER QUICK START (3 Steps)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: Copy this folder to your project root
+--------
+
+YOUR PROJECT/
+├── dev_project_diagnostic_tool/   ← THIS FOLDER
+├── src/
+├── package.json
+└── ...
+
+
+STEP 2: Run the diagnostic
+--------
+
+Open terminal in the diagnostic folder:
+
+  cd dev_project_diagnostic_tool
+  node universal-diagnostic.js
+
+
+STEP 3: Check the results
+--------
+
+Open the HTML report:
+
+  macOS/Linux:  open output/diagnostic-report.html
+  Windows:      start output\diagnostic-report.html
+
+DONE! ✅
+
+
+═══════════════════════════════════════════════════════════════════
+WHAT YOU GET
+═══════════════════════════════════════════════════════════════════
+
+📊 HEALTH SCORE (0-100)
+   See how healthy your project is instantly
+
+⚠️  ISSUES DETECTED
+   Critical problems, warnings, and suggestions
+
+📄 3 REPORT FORMATS
+   • JSON (for automation)
+   • HTML (beautiful dashboard)
+   • Markdown (easy to read)
+
+🤖 AI ASSISTANT CONTEXT
+   Complete project knowledge in one file
+
+
+═══════════════════════════════════════════════════════════════════
+COMMON COMMANDS
+═══════════════════════════════════════════════════════════════════
+
+Basic run:
+  node universal-diagnostic.js
+
+Auto-fix issues:
+  node universal-diagnostic.js --auto-fix
+
+HTML report only:
+  node universal-diagnostic.js --format=html
+
+Verbose output:
+  node universal-diagnostic.js --verbose
+
+
+═══════════════════════════════════════════════════════════════════
+USING WITH AI ASSISTANTS
+═══════════════════════════════════════════════════════════════════
+
+1. Run diagnostic:
+   node universal-diagnostic.js
+
+2. Open AI context:
+   open templates/ai-context-template.md
+
+3. Copy entire file and paste to ChatGPT/Claude
+
+4. Say: "This is my project context"
+
+5. AI now understands EVERYTHING about your project!
+
+   Ask anything:
+   • "Why are there 0 stores?"
+   • "How do I add Germany support?"
+   • "Test with Orlando, USA"
+
+   AI will answer INSTANTLY with complete context! 🚀
+
+
+═══════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+❌ "node: command not found"
+   Install Node.js from: https://nodejs.org/
+
+❌ "Permission denied"
+   Run: chmod +x universal-diagnostic.js
+
+❌ "No output folder"
+   Create: mkdir -p output
+
+✅ For detailed help, see: SETUP_AND_USAGE.txt
+
+
+═══════════════════════════════════════════════════════════════════
+NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+
+✅ Run the diagnostic now!
+✅ Review the HTML report
+✅ Fix critical issues
+✅ Share AI context with assistants
+✅ Add to CI/CD pipeline
+
+For complete documentation: See README.md
+
+
+═══════════════════════════════════════════════════════════════════
+
+            🎯 RUN NOW: node universal-diagnostic.js
+
+═══════════════════════════════════════════════════════════════════

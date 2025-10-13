@@ -1,0 +1,552 @@
+{
+  "timestamp": "2025-10-13T00:03:49.530Z",
+  "projectName": "Encarregado",
+  "projectRoot": "/Users/eros/Desktop/encarregado",
+  "platform": "darwin",
+  "nodeVersion": "v24.9.0",
+  "functions": [
+    {
+      "name": "auth-register",
+      "path": "netlify/functions/auth-register.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 415,
+      "dependencies": [
+        "@netlify/neon",
+        "./utils/geocoding_google.js",
+        "./utils/places_google.js"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/auth-register",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": false,
+          "parameters": [
+            "username",
+            "store",
+            "confirmCoordinates",
+            "useGoogleData"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "auto-populate-city",
+      "path": "netlify/functions/auto-populate-city.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 333,
+      "dependencies": [
+        "@netlify/neon",
+        "./utils/places_nearby_google.js"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/auto-populate-city",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": true,
+          "parameters": [
+            "password",
+            "cityId"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "auto-populate-stores",
+      "path": "netlify/functions/auto-populate-stores.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 249,
+      "dependencies": [
+        "@netlify/neon",
+        "./utils/places_nearby_google.js"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/auto-populate-stores",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": true,
+          "parameters": [
+            "password"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "discover-city",
+      "path": "netlify/functions/discover-city.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": true,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 238,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/discover-city",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": false,
+          "parameters": [
+            "cityName",
+            "countryName = 'Brasil'"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "discover-neighborhoods",
+      "path": "netlify/functions/discover-neighborhoods.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": true,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 264,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/discover-neighborhoods",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": false,
+          "parameters": [
+            "cityId"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "get-cities",
+      "path": "netlify/functions/get-cities.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 84,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/get-cities",
+          "methods": [
+            "GET"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "get-lojas",
+      "path": "netlify/functions/get-lojas.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 69,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/get-lojas",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "get-neighborhoods",
+      "path": "netlify/functions/get-neighborhoods.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 121,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/get-neighborhoods",
+          "methods": [
+            "GET"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "init-database",
+      "path": "netlify/functions/init-database.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 379,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/init-database",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "init_db",
+      "path": "netlify/functions/init_db.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": false,
+      "lineCount": 42,
+      "dependencies": [
+        "@netlify/neon"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/init_db",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "scoped-auto-populate",
+      "path": "netlify/functions/scoped-auto-populate.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": true,
+      "lineCount": 499,
+      "dependencies": [
+        "@netlify/neon",
+        "./utils/places_nearby_google.js"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/scoped-auto-populate",
+          "methods": [
+            "POST"
+          ],
+          "requiresAuth": true,
+          "parameters": [
+            "password",
+            "neighborhood_ids"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "seed_lojas",
+      "path": "netlify/functions/seed_lojas.js",
+      "type": "netlify-function",
+      "hasHandler": true,
+      "hasAsync": true,
+      "usesDatabase": true,
+      "usesGoogleAPI": false,
+      "hasErrorHandling": true,
+      "hasCORS": false,
+      "lineCount": 107,
+      "dependencies": [
+        "@netlify/neon",
+        "fs",
+        "path"
+      ],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/seed_lojas",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "geocoding_google",
+      "path": "netlify/functions/utils/geocoding_google.js",
+      "type": "netlify-function",
+      "hasHandler": false,
+      "hasAsync": true,
+      "usesDatabase": false,
+      "usesGoogleAPI": true,
+      "hasErrorHandling": true,
+      "hasCORS": false,
+      "lineCount": 270,
+      "dependencies": [],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/geocoding_google",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": [
+        {
+          "severity": "critical",
+          "message": "Missing handler export"
+        }
+      ]
+    },
+    {
+      "name": "places_google",
+      "path": "netlify/functions/utils/places_google.js",
+      "type": "netlify-function",
+      "hasHandler": false,
+      "hasAsync": true,
+      "usesDatabase": false,
+      "usesGoogleAPI": true,
+      "hasErrorHandling": true,
+      "hasCORS": false,
+      "lineCount": 251,
+      "dependencies": [],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/places_google",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": [
+        {
+          "severity": "critical",
+          "message": "Missing handler export"
+        }
+      ]
+    },
+    {
+      "name": "places_nearby_google",
+      "path": "netlify/functions/utils/places_nearby_google.js",
+      "type": "netlify-function",
+      "hasHandler": false,
+      "hasAsync": true,
+      "usesDatabase": false,
+      "usesGoogleAPI": true,
+      "hasErrorHandling": true,
+      "hasCORS": false,
+      "lineCount": 294,
+      "dependencies": [],
+      "endpoints": [
+        {
+          "path": "/.netlify/functions/places_nearby_google",
+          "methods": [
+            "ANY"
+          ],
+          "requiresAuth": false,
+          "parameters": []
+        }
+      ],
+      "issues": [
+        {
+          "severity": "critical",
+          "message": "Missing handler export"
+        }
+      ]
+    }
+  ],
+  "database": {
+    "hasEnvFile": true,
+    "hasDatabaseURL": true,
+    "hasGoogleAPIKey": true,
+    "tables": [
+      "users",
+      "lojas",
+      "cities",
+      "neighborhoods",
+      "auto_population_runs"
+    ],
+    "views": [
+      "store_statistics"
+    ],
+    "issues": []
+  },
+  "frontend": {
+    "files": 3,
+    "totalLines": 1340,
+    "usesLeaflet": true,
+    "usesFetch": true,
+    "hasErrorHandling": true,
+    "issues": []
+  },
+  "apis": {
+    "google": {
+      "geocoding": true,
+      "places": true,
+      "textSearch": true
+    },
+    "netlify": {
+      "functions": true,
+      "neon": true
+    },
+    "issues": []
+  },
+  "issues": [
+    {
+      "category": "backend",
+      "file": "geocoding_google",
+      "severity": "critical",
+      "message": "Missing handler export"
+    },
+    {
+      "category": "backend",
+      "file": "places_google",
+      "severity": "critical",
+      "message": "Missing handler export"
+    },
+    {
+      "category": "backend",
+      "file": "places_nearby_google",
+      "severity": "critical",
+      "message": "Missing handler export"
+    }
+  ],
+  "autoFixes": [],
+  "statistics": {
+    "totalFunctions": 15,
+    "totalLines": 4955,
+    "criticalIssues": 3,
+    "warnings": 0,
+    "autoFixesAvailable": 0,
+    "databaseTables": 5,
+    "apiIntegrations": 3
+  },
+  "healthScore": 75,
+  "structure": {
+    "backend": [
+      "/Users/eros/Desktop/encarregado/netlify/functions/auth-register.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/auto-populate-city.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/auto-populate-stores.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/discover-city.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/discover-neighborhoods.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/get-cities.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/get-lojas.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/get-neighborhoods.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/init-database.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/init_db.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/scoped-auto-populate.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/seed_lojas.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/utils/geocoding_google.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/utils/places_google.js",
+      "/Users/eros/Desktop/encarregado/netlify/functions/utils/places_nearby_google.js"
+    ],
+    "frontend": [
+      "/Users/eros/Desktop/encarregado/public/admin-scoped.js",
+      "/Users/eros/Desktop/encarregado/public/admin.js",
+      "/Users/eros/Desktop/encarregado/public/script.js",
+      "/Users/eros/Desktop/encarregado/public/admin-scoped.html",
+      "/Users/eros/Desktop/encarregado/public/admin.html",
+      "/Users/eros/Desktop/encarregado/public/index.html"
+    ],
+    "database": [
+      "/Users/eros/Desktop/encarregado/tools/scripts/add_source_column.sql",
+      "/Users/eros/Desktop/encarregado/tools/scripts/add_user_verified_column.sql",
+      "/Users/eros/Desktop/encarregado/tools/scripts/create_cities_neighborhoods_tables.sql",
+      "/Users/eros/Desktop/encarregado/tools/scripts/create_tables.sql",
+      "/Users/eros/Desktop/encarregado/tools/scripts/migrate_rio_zones_to_db.sql",
+      "/Users/eros/Desktop/encarregado/tools/scripts/add_place_id_constraint.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/check_coordinates.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/init_and_seed.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/run_all_scoped_migrations.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/run_migration.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/test_all_stores.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/test_complete_system.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/test_geocoding.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/test_google_api_key.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/verify_constraint.js",
+      "/Users/eros/Desktop/encarregado/tools/scripts/verify_db.js"
+    ],
+    "config": [
+      "package.json",
+      ".env",
+      "netlify.toml"
+    ],
+    "tests": [],
+    "docs": []
+  }
+}

@@ -5,31 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Encarregado - Lojas de Material de Construção RJ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
     <header>
-        🔨 Lojas de Material de Construção RJ
-        <button id="toggle-sidebar-btn">☰ Filtros & Lojas</button>
+        <button id="toggle-sidebar-btn"><i class="fas fa-bars"></i></button>
+        <span>🏗️ Lojas de Material de Construção RJ</span>
+        <a href="admin.html" id="admin-btn" title="Admin Panel">
+            <i class="fas fa-cog"></i>
+        </a>
     </header>
 
     <div id="overlay"></div>
 
     <div class="wrapper">
         <div id="sidebar">
-            <div class="sidebar-controls">
-                <h2>Filtros</h2>
-                <label for="bairro-filter">Filtrar por Bairro</label>
-                <input type="text" id="bairro-filter" placeholder="Digite um bairro...">
-                <button class="btn" id="filter-btn">Buscar</button>
-                <button class="btn" id="reset-btn">Limpar Filtro</button>
-                <button class="btn" id="geolocate-btn">📍 Minha Localização</button>
-                <button class="btn special" id="open-register-modal-btn">➕ Cadastre sua Loja</button>
-            </div>
-            <div id="lojasList">
+            <div class="filter-section">
+                <h2><i class="fas fa-sliders-h"></i> Filtros</h2>
+                <div style="margin-top: 15px;">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar por nome ou endereço...">
                 </div>
+
+                <label for="bairro-filter"><i class="fas fa-map-marker-alt"></i> Bairro</label>
+                <select id="bairro-filter">
+                    <option value="">Todos os bairros</option>
+                    <option value="Ipanema">Ipanema</option>
+                    <option value="Copacabana">Copacabana</option>
+                    <option value="Tijuca">Tijuca</option>
+                    <option value="Barra da Tijuca">Barra da Tijuca</option>
+                    <option value="Botafogo">Botafogo</option>
+                    <option value="Centro">Centro</option>
+                    <option value="Méier">Méier</option>
+                    <option value="Gávea">Gávea</option>
+                </select>
+
+                <label for="source-filter"><i class="fas fa-filter"></i> Fonte dos Dados</label>
+                <select id="source-filter">
+                    <option value="all">Todas as Lojas</option>
+                    <option value="user">🙂 Apenas Usuários</option>
+                    <option value="auto">🙃 Apenas Auto-populadas</option>
+                    <option value="verified">🧵 Apenas Verificadas</option>
+                </select>
+
+                <div class="btn-group">
+                    <button class="btn" id="filter-btn">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn" id="geolocate-btn" title="Minha Localização">
+                        <i class="fas fa-location-arrow"></i>
+                    </button>
+                </div>
+
+                <button class="btn" id="reset-btn"><i class="fas fa-redo"></i> Limpar Filtro</button>
+                <button class="btn special" id="open-register-modal-btn"><i class="fas fa-plus-circle"></i> Cadastre sua Loja</button>
+            </div>
+
+            <div class="results-header">
+                <h3><i class="fas fa-store"></i> Lojas</h3>
+                <span id="resultsCount" class="results-count">0</span>
+            </div>
+            <div id="lojasList"></div>
         </div>
         <div id="map"></div>
     </div>
@@ -64,8 +100,9 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Clustering removed - pins now show exact locations -->
+    <!-- <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script> -->
     <script src="script.js"></script>
 </body>
 </html>

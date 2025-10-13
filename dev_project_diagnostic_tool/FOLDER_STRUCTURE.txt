@@ -1,0 +1,397 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                 DEV PROJECT DIAGNOSTIC TOOL                                ║
+║                 Folder Structure & File Guide                              ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════
+COMPLETE FOLDER STRUCTURE
+═══════════════════════════════════════════════════════════════════════════
+
+dev_project_diagnostic_tool/
+│
+├── 📄 QUICK_START.txt              ← START HERE! (2 min guide)
+├── 📄 SETUP_AND_USAGE.txt          ← Complete setup instructions
+├── 📄 FOLDER_STRUCTURE.txt         ← This file
+├── 📘 README.md                    ← Full documentation
+│
+├── 🔧 universal-diagnostic.js      ← Main diagnostic engine (Node.js)
+│
+├── 📁 templates/                   ← Templates for reports
+│   ├── ai-context-template.md     ← AI assistant context (IMPORTANT!)
+│   └── (future: more templates)
+│
+└── 📁 output/                      ← Generated reports go here
+    ├── diagnostic-report.json     ← Machine-readable report
+    ├── diagnostic-report.html     ← Beautiful dashboard
+    └── diagnostic-summary.md      ← Human-readable summary
+
+
+═══════════════════════════════════════════════════════════════════════════
+FILE DESCRIPTIONS
+═══════════════════════════════════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📄 QUICK_START.txt                                                     ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Get started in 2 minutes
+SIZE:       ~2 KB
+READ TIME:  2 minutes
+
+WHEN TO USE:
+  • First time using the tool
+  • Need a quick reminder
+  • Want the absolute minimum steps
+
+CONTAINS:
+  ✓ 3-step quick start
+  ✓ Common commands
+  ✓ Basic troubleshooting
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📄 SETUP_AND_USAGE.txt                                                 ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Complete setup and usage guide
+SIZE:       ~25 KB
+READ TIME:  15-20 minutes
+
+WHEN TO USE:
+  • Setting up for first time
+  • Need detailed instructions
+  • Troubleshooting problems
+  • Learning advanced features
+
+CONTAINS:
+  ✓ Requirements
+  ✓ Installation for all platforms
+  ✓ Activation steps
+  ✓ Advanced usage
+  ✓ AI assistant integration
+  ✓ Troubleshooting
+  ✓ FAQ
+  ✓ Examples
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📄 FOLDER_STRUCTURE.txt                                                ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Understand what each file does
+SIZE:       ~15 KB
+READ TIME:  10 minutes
+
+YOU ARE HERE! ← This file explains the folder structure.
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📘 README.md                                                           ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Complete technical documentation
+SIZE:       ~50 KB
+READ TIME:  30-45 minutes
+
+WHEN TO USE:
+  • Need technical details
+  • Want to understand the code
+  • Planning CI/CD integration
+  • Contributing to the tool
+
+CONTAINS:
+  ✓ Features and capabilities
+  ✓ Installation guide
+  ✓ All command options
+  ✓ Report format details
+  ✓ Health score calculation
+  ✓ CI/CD examples
+  ✓ Development guide
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  🔧 universal-diagnostic.js                                             ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Main diagnostic engine
+SIZE:       ~1200 lines
+LANGUAGE:   JavaScript (Node.js)
+
+THIS IS THE CORE ENGINE!
+
+RUN IT:
+  node universal-diagnostic.js
+
+WHAT IT DOES:
+  1. Scans your entire project
+  2. Analyzes all code files
+  3. Detects issues
+  4. Generates reports
+  5. Creates AI context
+
+OPTIONS:
+  --format=html         Generate HTML report only
+  --format=json         Generate JSON report only
+  --format=markdown     Generate Markdown report only
+  --format=all          Generate all formats (default)
+  --auto-fix            Automatically fix issues
+  --verbose             Show detailed output
+  --generate-ai-context Generate AI context (default: true)
+
+REQUIREMENTS:
+  • Node.js v14+
+  • No additional dependencies!
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📁 templates/                                                          ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Template files for reports and AI context
+CONTENTS:   Currently 1 file, more coming soon
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📁 templates/ai-context-template.md                                   ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    AI assistant context (GAME CHANGER!)
+SIZE:       ~30 KB (~500 lines)
+FORMAT:     Markdown
+
+⭐ THIS IS THE MOST IMPORTANT FILE! ⭐
+
+WHAT IT IS:
+  A comprehensive prompt that gives AI assistants (ChatGPT, Claude, etc.)
+  COMPLETE knowledge of your project in ONE file.
+
+HOW TO USE:
+  1. Open the file: open templates/ai-context-template.md
+  2. Copy entire contents (Ctrl+A, Ctrl+C)
+  3. Paste into AI chat
+  4. Say: "This is my project context"
+  5. AI now understands EVERYTHING!
+
+WHAT IT INCLUDES:
+  ✓ Project overview & architecture
+  ✓ All function descriptions (15 functions)
+  ✓ Database schema (5 tables, 1 view)
+  ✓ API endpoints with examples
+  ✓ Common user intents & solutions
+  ✓ Error patterns & fixes
+  ✓ Quick start commands
+  ✓ Troubleshooting guide
+
+BENEFIT:
+  WITHOUT context: 10+ messages to explain your project
+  WITH context:    1 message, AI knows everything!
+
+EXAMPLE:
+  User: [pastes context] "Why are there 0 stores added?"
+  AI:   "All stores already exist (duplicates). This is CORRECT
+         behavior - your google_place_id UNIQUE constraint is
+         preventing duplicates as designed!"
+
+
+╔════════════════════════════════════════════════════════════════════════╗
+║  📁 output/                                                             ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Stores generated diagnostic reports
+CREATED:    Automatically when you run the diagnostic
+CONTENTS:   3 report files (after first run)
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📁 output/diagnostic-report.json                                      ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Machine-readable diagnostic report
+FORMAT:     JSON
+SIZE:       Varies (typically 50-200 KB)
+
+USE CASES:
+  • CI/CD pipelines
+  • Automated dashboards
+  • Programmatic access
+  • Tracking health over time
+
+OPEN WITH:
+  • Any text editor
+  • JSON viewer
+  • Programmatically:
+      const report = require('./output/diagnostic-report.json');
+      console.log(report.healthScore);
+
+CONTAINS:
+  {
+    "timestamp": "2025-10-12T21:03:49.000Z",
+    "projectName": "YourProject",
+    "healthScore": 75,
+    "functions": [...],
+    "database": {...},
+    "issues": [...],
+    "statistics": {...}
+  }
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📁 output/diagnostic-report.html                                      ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Beautiful visual dashboard
+FORMAT:     HTML with embedded CSS
+SIZE:       Varies (typically 100-300 KB)
+
+⭐ BEST FOR VIEWING RESULTS! ⭐
+
+OPEN WITH:
+  macOS/Linux:  open output/diagnostic-report.html
+  Windows:      start output\diagnostic-report.html
+  Browser:      Double-click the file
+
+FEATURES:
+  • Color-coded health score gauge
+  • Interactive statistics cards
+  • Function list with badges (✅/❌)
+  • Issue breakdown (critical/warning)
+  • Responsive design (works on mobile!)
+  • No internet required (everything embedded)
+
+LOOKS LIKE:
+  ┌─────────────────────────────────────────┐
+  │  🔍 Diagnostic Report                   │
+  │  Encarregado - 12/10/2025              │
+  │                                         │
+  │  Health Score: 75/100 🟢                │
+  │                                         │
+  │  📊 Statistics                          │
+  │  ┌────────┬────────┬────────┐          │
+  │  │ 15     │ 4,955  │ 3      │          │
+  │  │ Funcs  │ Lines  │ Issues │          │
+  │  └────────┴────────┴────────┘          │
+  │                                         │
+  │  ⚠️ Issues (3)                          │
+  │  🔴 Missing handler export              │
+  │  ...                                    │
+  └─────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📁 output/diagnostic-summary.md                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:    Human-readable text summary
+FORMAT:     Markdown
+SIZE:       Varies (typically 20-50 KB)
+
+USE CASES:
+  • Quick overview
+  • Share in chat/email
+  • View in GitHub/GitLab
+  • Print for meetings
+
+OPEN WITH:
+  • Any text editor
+  • Markdown viewer
+  • GitHub (renders automatically)
+
+CONTAINS:
+  # 🔍 Diagnostic Report: YourProject
+
+  **Health Score:** 75/100
+
+  ## 📊 Statistics
+  - Functions: 15
+  - Lines of Code: 4,955
+  - Critical Issues: 3
+
+  ## ⚠️ Issues
+  ### 🔴 BACKEND - missing-handler
+  Description...
+
+  ## 📡 Backend Functions
+  ### function-name
+  - Lines: 238
+  - Error Handling: ✅
+  ...
+
+
+═══════════════════════════════════════════════════════════════════════════
+RECOMMENDED READING ORDER
+═══════════════════════════════════════════════════════════════════════════
+
+FOR FIRST-TIME USERS:
+
+1. 📄 QUICK_START.txt           (2 min)  ← Start here!
+2. 🔧 Run the diagnostic         (1 min)
+3. 📊 Open HTML report            (5 min)  ← See results
+4. 📄 SETUP_AND_USAGE.txt        (15 min) ← Learn more
+5. 📄 ai-context-template.md     (30 min) ← Share with AI
+
+
+FOR DEVELOPERS:
+
+1. 📘 README.md                  (30 min) ← Technical docs
+2. 🔧 universal-diagnostic.js    (1 hr)  ← Review code
+3. 📄 SETUP_AND_USAGE.txt        (15 min) ← Advanced usage
+
+
+FOR CI/CD INTEGRATION:
+
+1. 📘 README.md                  (30 min) ← CI/CD examples
+2. 📊 diagnostic-report.json     (10 min) ← JSON structure
+3. 🔧 Test in pipeline           (1 hr)  ← Implement
+
+
+═══════════════════════════════════════════════════════════════════════════
+FILE SIZES SUMMARY
+═══════════════════════════════════════════════════════════════════════════
+
+QUICK_START.txt              ~2 KB    ⚡ Quick
+FOLDER_STRUCTURE.txt         ~15 KB   📋 Reference
+SETUP_AND_USAGE.txt          ~25 KB   📖 Complete
+README.md                    ~50 KB   📚 Technical
+universal-diagnostic.js      ~120 KB  🔧 Engine
+ai-context-template.md       ~30 KB   🤖 AI Context
+
+GENERATED REPORTS:
+diagnostic-report.json       ~50-200 KB
+diagnostic-report.html       ~100-300 KB
+diagnostic-summary.md        ~20-50 KB
+
+TOTAL SIZE: ~500 KB (including all reports)
+
+
+═══════════════════════════════════════════════════════════════════════════
+WHERE TO GET HELP
+═══════════════════════════════════════════════════════════════════════════
+
+QUICK HELP:     QUICK_START.txt
+SETUP HELP:     SETUP_AND_USAGE.txt (Troubleshooting section)
+TECHNICAL:      README.md (FAQ section)
+AI HELP:        Share ai-context-template.md with AI assistant!
+
+
+═══════════════════════════════════════════════════════════════════════════
+VERSION INFORMATION
+═══════════════════════════════════════════════════════════════════════════
+
+Current Version:    1.0
+Release Date:       October 2025
+Platform:           Cross-platform (Node.js, Python, Swift, PowerShell)
+Language:           JavaScript (Node.js v14+)
+Dependencies:       None (uses built-in modules only!)
+License:            MIT
+
+
+═══════════════════════════════════════════════════════════════════════════
+
+            🎯 READY TO START? RUN THIS COMMAND:
+
+                node universal-diagnostic.js
+
+═══════════════════════════════════════════════════════════════════════════
