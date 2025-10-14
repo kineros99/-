@@ -30,15 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Enable clustering for better performance with many markers
     const markersLayer = L.markerClusterGroup({
-        maxClusterRadius: 50, // Cluster markers within 50 pixels
+        maxClusterRadius: 30, // Reduced from 50 to 30 for tighter, more accurate grouping
         spiderfyOnMaxZoom: true, // Show all markers when fully zoomed in
         showCoverageOnHover: false, // Don't show cluster coverage area on hover
-        zoomToBoundsOnClick: true // Zoom in when clicking a cluster
+        zoomToBoundsOnClick: true, // Zoom in when clicking a cluster
+        disableClusteringAtZoom: 16, // Disable clustering at street-level zoom (zoom 16+) to show exact positions
+        removeOutsideVisibleBounds: true // Remove markers outside viewport for better performance
     });
     map.addLayer(markersLayer);
     
     // Cache local para todas as lojas
     let allLojas = [];
+    let allCities = []; // Store all cities for filtering
+    let selectedCity = null; // Store selected city for neighborhood filtering
+    let selectedCityNeighborhoods = []; // Store neighborhoods for selected city
     let userLocation = null; // Store user's location
     let radiusCircle = null; // Store radius circle overlay
     const userLocationMarker = L.icon({
@@ -73,6 +78,154 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(url, '_blank');
 
         console.log(`[Route] Opening directions to ${lojaName}`);
+    };
+
+    // --- CITY SEARCH FUNCTIONALITY ---
+
+    // Fuzzy string matching (removes accents, special chars, ignores case)
+    const normalizeString = (str) => {
+        return str
+            .toLowerCase()
+            .normalize('NFD')  // Decompose accented characters
+            .replace(/[\u0300-\u036f]/g, '')  // Remove diacritics
+            .replace(/[`~'",.!?;:]/g, '')  // Remove special punctuation
+            .trim();
+    };
+
+    const fuzzyMatch = (search, target) => {
+        const normalizedSearch = normalizeString(search);
+        const normalizedTarget = normalizeString(target);
+        return normalizedTarget.includes(normalizedSearch);
+    };
+
+    // Load cities from API
+    const loadCities = async () => {
+        try {
+            console.log('[LoadCities] Fetching cities...');
+            const response = await fetch('/.netlify/functions/get-cities');
+            if (!response.ok) throw new Error('Failed to fetch cities');
+
+            allCities = await response.json();
+            console.log(`[LoadCities] ✓ Loaded ${allCities.length} cities`);
+        } catch (error) {
+            console.error('[LoadCities] ERROR:', error);
+        }
+    };
+
+    // Setup city search with fuzzy matching
+    const setupCitySearch = () => {
+        const citySearchInput = document.getElementById('city-search');
+        const cityDropdown = document.getElementById('city-dropdown');
+        const selectedCityInfo = document.getElementById('selected-city-info');
+        const selectedCityName = document.getElementById('selected-city-name');
+        const clearCityBtn = document.getElementById('clear-city-btn');
+
+        // Show dropdown on focus
+        citySearchInput.addEventListener('focus', () => {
+            if (citySearchInput.value.trim()) {
+                performCitySearch(citySearchInput.value);
+            }
+        });
+
+        // Search as user types
+        citySearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.trim();
+
+            if (searchTerm.length === 0) {
+                cityDropdown.classList.remove('active');
+                return;
+            }
+
+            performCitySearch(searchTerm);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.city-search-container')) {
+                cityDropdown.classList.remove('active');
+            }
+        });
+
+        // Clear city selection
+        clearCityBtn.addEventListener('click', () => {
+            selectedCity = null;
+            selectedCityNeighborhoods = [];
+            citySearchInput.value = '';
+            selectedCityInfo.style.display = 'none';
+            cityDropdown.classList.remove('active');
+
+            // Reload bairros dropdown with all neighborhoods
+            populateBairrosDropdown(allLojas);
+            console.log('[CitySearch] City selection cleared');
+        });
+    };
+
+    const performCitySearch = (searchTerm) => {
+        const cityDropdown = document.getElementById('city-dropdown');
+
+        // Filter cities using fuzzy matching
+        const matchedCities = allCities.filter(city => {
+            return fuzzyMatch(searchTerm, city.name) ||
+                   fuzzyMatch(searchTerm, city.state) ||
+                   fuzzyMatch(searchTerm, `${city.name} ${city.state}`);
+        });
+
+        renderCityDropdown(matchedCities);
+    };
+
+    const renderCityDropdown = (cities) => {
+        const cityDropdown = document.getElementById('city-dropdown');
+        cityDropdown.innerHTML = '';
+
+        if (cities.length === 0) {
+            const noResultOption = document.createElement('div');
+            noResultOption.className = 'city-option';
+            noResultOption.innerHTML = `
+                <div class="city-option-name">Nenhuma cidade encontrada</div>
+            `;
+            cityDropdown.appendChild(noResultOption);
+            cityDropdown.classList.add('active');
+            return;
+        }
+
+        cities.forEach(city => {
+            const option = document.createElement('div');
+            option.className = 'city-option';
+            option.dataset.cityId = city.id;
+
+            option.innerHTML = `
+                <div class="city-option-name">${city.name}, ${city.state}</div>
+                <div class="city-option-info">${city.neighborhood_count} bairros disponíveis</div>
+            `;
+
+            option.addEventListener('click', () => {
+                selectCity(city);
+            });
+
+            cityDropdown.appendChild(option);
+        });
+
+        cityDropdown.classList.add('active');
+    };
+
+    const selectCity = (city) => {
+        const citySearchInput = document.getElementById('city-search');
+        const cityDropdown = document.getElementById('city-dropdown');
+        const selectedCityInfo = document.getElementById('selected-city-info');
+        const selectedCityName = document.getElementById('selected-city-name');
+
+        selectedCity = city;
+        citySearchInput.value = `${city.name}, ${city.state}`;
+        cityDropdown.classList.remove('active');
+
+        // Show selected city info
+        selectedCityName.textContent = `${city.name}, ${city.state} (${city.neighborhood_count} bairros)`;
+        selectedCityInfo.style.display = 'flex';
+
+        // Update bairros dropdown to show only this city's neighborhoods
+        populateBairrosDropdownForCity(city.id);
+
+        console.log(`[CitySearch] Selected city: ${city.name}, ${city.state} (ID: ${city.id})`);
     };
 
     // --- FUNÇÕES DE DADOS E RENDERIZAÇÃO ---
@@ -111,6 +264,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log(`[PopulateBairros] ✓ Successfully added ${bairrosUnicos.length} neighborhoods to dropdown`);
         console.log('[PopulateBairros] Final dropdown has', bairroSelect.options.length, 'options');
+    };
+
+    // Popula o dropdown de bairros com bairros de uma cidade específica
+    const populateBairrosDropdownForCity = async (cityId) => {
+        console.log(`[PopulateBairrosForCity] Loading neighborhoods for city ID: ${cityId}`);
+        const bairroSelect = document.getElementById('bairro-filter');
+
+        if (!bairroSelect) {
+            console.error('[PopulateBairrosForCity] ERROR: bairro-filter element not found!');
+            return;
+        }
+
+        try {
+            // Fetch neighborhoods for this specific city
+            const response = await fetch(`/.netlify/functions/get-neighborhoods?city_id=${cityId}`);
+            if (!response.ok) throw new Error('Failed to fetch neighborhoods');
+
+            const neighborhoods = await response.json();
+            console.log(`[PopulateBairrosForCity] Received ${neighborhoods.length} neighborhoods from API`);
+
+            // Store neighborhoods for filtering
+            selectedCityNeighborhoods = neighborhoods.map(n => n.name.toLowerCase());
+            console.log(`[PopulateBairrosForCity] Stored ${selectedCityNeighborhoods.length} neighborhood names for filtering`);
+
+            // Remove old options (except "Todos os bairros")
+            while (bairroSelect.options.length > 1) {
+                bairroSelect.remove(1);
+            }
+
+            // Add each neighborhood as an option
+            neighborhoods.forEach(neighborhood => {
+                const option = document.createElement('option');
+                option.value = neighborhood.name;
+                option.textContent = neighborhood.name;
+                bairroSelect.appendChild(option);
+            });
+
+            console.log(`[PopulateBairrosForCity] ✓ Successfully added ${neighborhoods.length} neighborhoods for city ${cityId}`);
+            console.log('[PopulateBairrosForCity] Final dropdown has', bairroSelect.options.length, 'options');
+
+        } catch (error) {
+            console.error('[PopulateBairrosForCity] ERROR:', error);
+        }
     };
 
     // Busca lojas da nossa API (Netlify Function)
@@ -222,6 +418,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const marker = L.marker([lat, lng], { icon: customIcon });
 
+                // Extract clean website name for display
+                let websiteDisplay = '';
+                if (loja.website) {
+                    try {
+                        const url = new URL(loja.website.startsWith('http') ? loja.website : `https://${loja.website}`);
+                        const domain = url.hostname.replace('www.', '');
+                        websiteDisplay = `<a href="${loja.website}" target="_blank" rel="noopener noreferrer" style="color: #4CAF50; text-decoration: none; font-weight: 500;">🌐 ${loja.nome} Website</a><br>`;
+                    } catch (e) {
+                        // If URL parsing fails, show simple link
+                        websiteDisplay = `<a href="${loja.website}" target="_blank" rel="noopener noreferrer" style="color: #4CAF50; text-decoration: none; font-weight: 500;">🌐 Website</a><br>`;
+                    }
+                }
+
                 const popupContent = `
                     <div style="min-width: 200px;">
                         <b>${loja.nome}</b><br>
@@ -229,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${loja.endereco}<br>
                         ${loja.bairro ? `📍 ${loja.bairro}<br>` : ''}
                         ${loja.telefone ? `📞 ${loja.telefone}<br>` : ''}
+                        ${websiteDisplay}
                         <br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>
                     </div>
                 `;
@@ -248,6 +458,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Create loja item content with action buttons
+                const routeButtonClass = userLocation ? 'action-btn' : 'action-btn action-btn-disabled';
+                const routeButtonTitle = userLocation ? 'Abrir rota no Google Maps' : 'Defina sua localização primeiro (botão 📍)';
+
                 item.innerHTML = `
                     <div class="loja-nome">
                         <span class="source-badge" title="${sourceTitle}">${sourceBadge}</span>
@@ -256,10 +469,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="loja-endereco">${loja.endereco}</div>
                     ${loja.telefone ? `<div class="loja-telefone">📞 ${loja.telefone}</div>` : ''}
                     <div class="loja-actions">
-                        <button class="action-btn" data-loja-id="${index}" data-action="route">
+                        <button class="${routeButtonClass}" data-loja-id="${index}" data-action="route" title="${routeButtonTitle}">
                             <i class="fas fa-route"></i> Rota
                         </button>
-                        <button class="action-btn" data-loja-id="${index}" data-action="view">
+                        <button class="action-btn" data-loja-id="${index}" data-action="view" title="Ver no mapa">
                             <i class="fas fa-map-marker-alt"></i> Ver no Mapa
                         </button>
                     </div>
@@ -344,7 +557,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const sourceFilter = document.getElementById('source-filter').value;
         const radiusKm = parseFloat(radiusSlider.value);
 
+        console.log('[FilterLojas] Filtering with city:', selectedCity ? `${selectedCity.name} (${selectedCityNeighborhoods.length} neighborhoods)` : 'None');
+
         const filteredLojas = allLojas.filter(loja => {
+            // City filter (only apply if city is selected)
+            let matchCity = true;
+            if (selectedCity && selectedCityNeighborhoods.length > 0) {
+                // Only show stores from neighborhoods in the selected city
+                matchCity = loja.bairro && selectedCityNeighborhoods.includes(loja.bairro.toLowerCase());
+            }
+
             const matchSearch = !searchTerm ||
                 loja.nome.toLowerCase().includes(searchTerm) ||
                 loja.endereco.toLowerCase().includes(searchTerm) ||
@@ -371,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 matchRadius = distance <= radiusKm;
             }
 
-            return matchSearch && matchBairro && matchCategory && matchSource && matchRadius;
+            return matchCity && matchSearch && matchBairro && matchCategory && matchSource && matchRadius;
         });
 
         renderLojas(filteredLojas);
@@ -396,12 +618,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
+        // Clear all filter inputs
         document.getElementById('bairro-filter').value = '';
         document.getElementById('searchInput').value = '';
         document.getElementById('category-filter').value = 'all';
         document.getElementById('source-filter').value = 'all';
+
+        // Clear city selection
+        selectedCity = null;
+        selectedCityNeighborhoods = [];
+        document.getElementById('city-search').value = '';
+        document.getElementById('selected-city-info').style.display = 'none';
+        document.getElementById('city-dropdown').classList.remove('active');
+
+        // Reload bairros dropdown with all neighborhoods
+        populateBairrosDropdown(allLojas);
+
+        // Reset map and render all stores
         renderLojas(allLojas); // Renderiza a partir do cache
         map.setView([-22.9068, -43.1729], 12);
+
+        console.log('[Reset] All filters cleared including city selection');
     });
 
     // Geolocalização do usuário
@@ -660,5 +897,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CARGA INICIAL ---
     console.log('[Init] Starting initial data load...');
     console.log('[Init] DOM ready, map initialized, event listeners attached');
+
+    // Load cities and setup city search
+    loadCities().then(() => {
+        setupCitySearch();
+        console.log('[Init] City search initialized');
+    });
+
+    // Load all stores
     fetchLojas();
 });

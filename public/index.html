@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Encarregado - Lojas de Material de Construção RJ</title>
+    <title>AquiFacil - Lojas de Material de Construção</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
     <header>
         <button id="toggle-sidebar-btn"><i class="fas fa-bars"></i></button>
-        <span>🏗️ constru Facil </span>
+        <div class="header-brand">
+            <img src="/images/aquifacil-logo.jpeg" alt="AquiFacil Logo" class="header-logo">
+            <span class="header-title">AquiFacil</span>
+        </div>
         <a href="admin.html" id="admin-btn" title="Admin Panel">
             <i class="fas fa-cog"></i>
         </a>
@@ -27,6 +33,23 @@
                 <h2><i class="fas fa-sliders-h"></i> Filtros</h2>
                 <div style="margin-top: 15px;">
                     <input type="text" id="searchInput" placeholder="🔍 Buscar por nome ou endereço...">
+                </div>
+
+                <label for="city-search"><i class="fas fa-city"></i> Cidade</label>
+                <div class="city-search-container">
+                    <input
+                        type="text"
+                        id="city-search"
+                        placeholder="Digite o nome da cidade..."
+                        autocomplete="off"
+                    />
+                    <div id="city-dropdown" class="city-dropdown"></div>
+                </div>
+                <div id="selected-city-info" class="selected-city-info" style="display: none;">
+                    <i class="fas fa-check-circle"></i> <span id="selected-city-name"></span>
+                    <button id="clear-city-btn" class="clear-city-btn" title="Limpar seleção de cidade">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
                 <label for="bairro-filter"><i class="fas fa-map-marker-alt"></i> Bairro</label>

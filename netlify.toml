@@ -7,8 +7,8 @@
   node_bundler = "esbuild"
 
 # Increase function timeout for local dev (default is 10s)
-[dev.functions]
-  "*" = { timeout = 60 }
+[dev]
+  functionsPort = 8888
 
 [[redirects]]
   from = "/api/*"

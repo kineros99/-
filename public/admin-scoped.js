@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCityName = document.getElementById('selected-city-name');
     const neighborhoodsContainer = document.getElementById('neighborhoods-container');
     const selectAllBtn = document.getElementById('select-all-btn');
+    const resetApurationBtn = document.getElementById('reset-apuration-btn');
     const runButton = document.getElementById('runButton');
     const logDiv = document.getElementById('log');
     const messageDiv = document.getElementById('message');
@@ -160,6 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show selected city info
         selectedCityName.textContent = `${city.name}, ${city.state} (${city.neighborhood_count} bairros)`;
         selectedCityInfo.style.display = 'block';
+
+        // Enable reset button when city is selected
+        resetApurationBtn.disabled = false;
 
         // Load neighborhoods
         await loadNeighborhoods(city.id);
@@ -365,10 +369,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ========================================================================
+    // Reset Apuration Counts
+    // ========================================================================
+    resetApurationBtn.addEventListener('click', async () => {
+        if (!selectedCity) {
+            showMessage('Selecione uma cidade primeiro', 'error');
+            return;
+        }
+
+        const confirmMsg = `⚠️ ATENÇÃO: Esta ação irá resetar os contadores de apuração para TODOS os ${allNeighborhoods.length} bairros de ${selectedCity.name}.\n\n` +
+                          `Todos os bairros voltarão para "Primeira apuração" com limite de 666 lojas.\n\n` +
+                          `Deseja continuar?`;
+
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        // Get credentials
+        const username = document.getElementById('exec-username').value.trim();
+        const password = document.getElementById('exec-password').value.trim();
+
+        if (!username || !password) {
+            showMessage('Por favor, preencha usuário e senha primeiro', 'error');
+            return;
+        }
+
+        if (username !== 'kinEROS') {
+            showMessage('Usuário inválido', 'error');
+            return;
+        }
+
+        // Disable button and show loading
+        resetApurationBtn.disabled = true;
+        const originalText = resetApurationBtn.innerHTML;
+        resetApurationBtn.innerHTML = '<div class="spinner"></div><span>Resetando...</span>';
+
+        try {
+            addLog('🔄 Resetando contadores de apuração...', 'info');
+
+            const response = await fetch('/.netlify/functions/reset-apuration-counts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: password,
+                    cityId: selectedCity.id
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Erro ao resetar contadores');
+            }
+
+            addLog(`✅ ${result.neighborhoods_reset} bairros resetados com sucesso!`, 'success');
+            addLog(`⏱️  Tempo de execução: ${result.execution_time_ms}ms`, 'info');
+            showMessage(`✅ Contadores resetados com sucesso! ${result.neighborhoods_reset} bairros voltaram para primeira apuração.`, 'success');
+
+            // Reload neighborhoods to show updated counts
+            setTimeout(() => {
+                addLog('🔄 Recarregando bairros...', 'info');
+                loadNeighborhoods(selectedCity.id);
+            }, 1000);
+
+        } catch (error) {
+            addLog(`❌ Erro ao resetar contadores: ${error.message}`, 'error');
+            showMessage(`❌ Erro: ${error.message}`, 'error');
+        } finally {
+            resetApurationBtn.innerHTML = originalText;
+            resetApurationBtn.disabled = false;
+        }
+    });
+
+    // ========================================================================
     // Run Scoped Auto-Population
     // ========================================================================
     const execUsernameInput = document.getElementById('exec-username');
     const execPasswordInput = document.getElementById('exec-password');
+
+    // Batch configuration to prevent timeouts
+    const BATCH_SIZE = 12; // 12 neighborhoods = ~24 seconds, safe under 30s limit
 
     runButton.addEventListener('click', async () => {
         if (selectedNeighborhoods.size === 0) {
@@ -406,62 +486,166 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.style.display = 'none';
 
         try {
-            addLog(`📍 Bairros selecionados: ${selectedNeighborhoods.size}`, 'info');
-            addLog('📡 Conectando com Google Places API...', 'info');
+            const neighborhoodArray = Array.from(selectedNeighborhoods);
+            addLog(`📍 Bairros selecionados: ${neighborhoodArray.length}`, 'info');
 
-            const response = await fetch('/.netlify/functions/scoped-auto-populate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    password: password,
-                    neighborhood_ids: Array.from(selectedNeighborhoods)
-                })
-            });
+            // Determine if batching is needed
+            const needsBatching = neighborhoodArray.length > BATCH_SIZE;
+            const batches = [];
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'Erro ao executar scoped auto-population');
+            if (needsBatching) {
+                // Split into batches
+                for (let i = 0; i < neighborhoodArray.length; i += BATCH_SIZE) {
+                    batches.push(neighborhoodArray.slice(i, i + BATCH_SIZE));
+                }
+                addLog(`⚙️  Dividindo em ${batches.length} lotes para evitar timeout`, 'info');
+                batches.forEach((batch, idx) => {
+                    addLog(`   Lote ${idx + 1}: ${batch.length} bairros`, 'info');
+                });
+                addLog('', 'info');
+            } else {
+                batches.push(neighborhoodArray);
             }
 
-            // Success!
+            addLog('📡 Conectando com Google Places API...', 'info');
             addLog('', 'info');
-            addLog('✅ SCOPED AUTO-POPULATION CONCLUÍDO COM SUCESSO!', 'success');
+
+            // Track cumulative results across all batches
+            let totalStoresAdded = 0;
+            let totalStoresSkipped = 0;
+            let totalApiCalls = 0;
+            let totalExecutionTime = 0;
+            let allNeighborhoodResults = [];
+            let allErrors = [];
+            let finalStatistics = null;
+
+            // Process each batch sequentially
+            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                const batch = batches[batchIndex];
+                const batchNum = batchIndex + 1;
+
+                if (needsBatching) {
+                    addLog(`📦 Processando Lote ${batchNum}/${batches.length} (${batch.length} bairros)...`, 'info');
+                } else {
+                    addLog(`📦 Processando ${batch.length} bairros...`, 'info');
+                }
+
+                try {
+                    const response = await fetch('/.netlify/functions/scoped-auto-populate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            password: password,
+                            neighborhood_ids: batch
+                        })
+                    });
+
+                    // Try to parse JSON, but handle timeout errors gracefully
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (parseError) {
+                        // If JSON parsing fails, it's likely a timeout error
+                        if (response.status === 500) {
+                            addLog('', 'info');
+                            addLog(`⚠️  Lote ${batchNum} TIMEOUT (30 segundos)`, 'error');
+                            addLog('ℹ️  O lote pode ainda estar processando em segundo plano', 'info');
+                            addLog('', 'info');
+
+                            // Continue with next batch instead of stopping
+                            if (batchIndex < batches.length - 1) {
+                                addLog('⏭️  Continuando com próximo lote...', 'info');
+                                continue;
+                            } else {
+                                // Last batch timed out
+                                addLog('⚠️  Último lote com timeout. Recarregando para verificar resultados...', 'info');
+                                break;
+                            }
+                        }
+                        throw new Error(`Erro ao processar resposta do lote ${batchNum}: ${parseError.message}`);
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(result.message || `Erro ao executar lote ${batchNum}`);
+                    }
+
+                    // Aggregate results from this batch
+                    totalStoresAdded += result.summary.stores_added;
+                    totalStoresSkipped += result.summary.stores_skipped;
+                    totalApiCalls += result.summary.api_calls_used;
+                    totalExecutionTime += result.summary.execution_time_ms;
+                    allNeighborhoodResults.push(...result.neighborhoods);
+                    if (result.errors && result.errors.length > 0) {
+                        allErrors.push(...result.errors);
+                    }
+                    finalStatistics = result.statistics; // Keep updating with latest
+
+                    // Show batch summary
+                    addLog(`   ✅ Lote ${batchNum}: +${result.summary.stores_added} lojas, ${result.summary.stores_skipped} duplicadas`, 'success');
+                    addLog(`   ⏱️  Tempo: ${(result.summary.execution_time_ms / 1000).toFixed(2)}s`, 'info');
+                    addLog('', 'info');
+
+                    // Small delay between batches to avoid overwhelming the API
+                    if (batchIndex < batches.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+
+                } catch (batchError) {
+                    addLog(`   ❌ Erro no lote ${batchNum}: ${batchError.message}`, 'error');
+                    addLog('', 'info');
+
+                    // Continue with next batch instead of stopping everything
+                    if (batchIndex < batches.length - 1) {
+                        addLog('⏭️  Continuando com próximo lote...', 'info');
+                    }
+                }
+            }
+
+            // Display final combined results
             addLog('', 'info');
-            addLog(`📊 Resumo Geral:`, 'info');
-            addLog(`   🏘️  Bairros pesquisados: ${result.summary.neighborhoods_searched}`, 'info');
-            addLog(`   🙃 Lojas adicionadas: ${result.summary.stores_added}`, 'success');
-            addLog(`   ⏭️  Lojas ignoradas (duplicadas): ${result.summary.stores_skipped}`, 'info');
-            addLog(`   📞 Chamadas API: ${result.summary.api_calls_used}`, 'info');
-            addLog(`   💰 Custo estimado: ${result.summary.estimated_cost}`, 'info');
-            addLog(`   ⏱️  Tempo de execução: ${(result.summary.execution_time_ms / 1000).toFixed(2)}s`, 'info');
+            addLog('✅ SCOPED AUTO-POPULATION CONCLUÍDO!', 'success');
+            addLog('', 'info');
+            addLog(`📊 Resumo Total (todos os lotes):`, 'info');
+            addLog(`   🏘️  Bairros processados: ${allNeighborhoodResults.length}`, 'info');
+            addLog(`   🙃 Total de lojas adicionadas: ${totalStoresAdded}`, 'success');
+            addLog(`   ⏭️  Total de lojas ignoradas (duplicadas): ${totalStoresSkipped}`, 'info');
+            addLog(`   📞 Total de chamadas API: ${totalApiCalls}`, 'info');
+            addLog(`   💰 Custo total estimado: $${(totalApiCalls * 0.032).toFixed(4)}`, 'info');
+            addLog(`   ⏱️  Tempo total de execução: ${(totalExecutionTime / 1000).toFixed(2)}s`, 'info');
 
             // Per-neighborhood results
-            addLog('', 'info');
-            addLog(`📍 Resultados por Bairro:`, 'info');
-            result.neighborhoods.forEach(n => {
-                if (n.error) {
-                    addLog(`   ❌ ${n.neighborhood_name}: ERRO - ${n.error}`, 'error');
-                } else {
-                    addLog(`   ✓ ${n.neighborhood_name}: +${n.stores_added} lojas (${n.stores_skipped} duplicadas)`, 'success');
-                }
-            });
-
-            addLog('', 'info');
-            addLog(`📈 Estatísticas Gerais:`, 'info');
-            addLog(`   🙂 Usuários: ${result.statistics.user_added_count}`, 'info');
-            addLog(`   🙃 Auto-populadas: ${result.statistics.auto_added_count}`, 'success');
-            addLog(`   📊 Total: ${result.statistics.total_stores}`, 'info');
-
-            if (result.errors && result.errors.length > 0) {
+            if (allNeighborhoodResults.length > 0) {
                 addLog('', 'info');
-                addLog(`⚠️  Alguns erros ocorreram (${result.errors.length}):`, 'error');
-                result.errors.forEach(err => {
-                    addLog(`   - ${err.store}: ${err.error}`, 'error');
+                addLog(`📍 Resultados por Bairro:`, 'info');
+                allNeighborhoodResults.forEach(n => {
+                    if (n.error) {
+                        addLog(`   ❌ ${n.neighborhood_name}: ERRO - ${n.error}`, 'error');
+                    } else {
+                        addLog(`   ✓ ${n.neighborhood_name}: +${n.stores_added} lojas (${n.stores_skipped} duplicadas)`, 'success');
+                    }
                 });
             }
 
-            showMessage(`✅ ${result.summary.stores_added} lojas adicionadas em ${result.summary.neighborhoods_searched} bairros!`, 'success');
+            if (finalStatistics) {
+                addLog('', 'info');
+                addLog(`📈 Estatísticas Gerais:`, 'info');
+                addLog(`   🙂 Usuários: ${finalStatistics.user_added_count}`, 'info');
+                addLog(`   🙃 Auto-populadas: ${finalStatistics.auto_added_count}`, 'success');
+                addLog(`   📊 Total: ${finalStatistics.total_stores}`, 'info');
+            }
+
+            if (allErrors.length > 0) {
+                addLog('', 'info');
+                addLog(`⚠️  Alguns erros ocorreram (${allErrors.length}):`, 'error');
+                allErrors.slice(0, 10).forEach(err => {
+                    addLog(`   - ${err.store}: ${err.error}`, 'error');
+                });
+                if (allErrors.length > 10) {
+                    addLog(`   ... e mais ${allErrors.length - 10} erros`, 'error');
+                }
+            }
+
+            showMessage(`✅ ${totalStoresAdded} lojas adicionadas em ${allNeighborhoodResults.length} bairros!`, 'success');
 
             // Reload neighborhoods to show updated apuration counts
             if (selectedCity) {
@@ -472,6 +656,11 @@ document.addEventListener('DOMContentLoaded', () => {
             addLog('', 'info');
             addLog('❌ ERRO AO EXECUTAR SCOPED AUTO-POPULATION', 'error');
             addLog(`   ${error.message}`, 'error');
+
+            // Show console logs for debugging
+            addLog('', 'info');
+            addLog('💡 Dica: Verifique os logs do console do servidor para mais detalhes', 'info');
+
             showMessage(`❌ Erro: ${error.message}`, 'error');
         } finally {
             runButton.disabled = false;

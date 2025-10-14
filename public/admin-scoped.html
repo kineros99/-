@@ -387,6 +387,33 @@
             color: #666;
             margin-top: 4px;
         }
+
+        .reset-button {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reset-button:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .reset-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -425,6 +452,9 @@
             <div class="step-section">
                 <div class="step-title">2️⃣ Selecione os Bairros</div>
                 <button id="select-all-btn" class="select-all-btn">Selecionar Todos</button>
+                <button id="reset-apuration-btn" class="reset-button" disabled>
+                    <i class="fas fa-redo"></i> Resetar Contadores de Apuração
+                </button>
                 <div id="neighborhoods-container" class="neighborhoods-grid">
                     <div class="loading">Selecione uma cidade primeiro...</div>
                 </div>

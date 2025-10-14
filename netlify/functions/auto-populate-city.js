@@ -152,8 +152,8 @@ export const handler = async (event) => {
         console.log('\n[Auto-Populate City] Step 4: Searching Google Places API...');
 
         // Use the generic search function with this city's neighborhoods
-        // Limit to 5 neighborhoods per run to prevent timeout (5 keywords × 5 neighborhoods × ~1s = ~25s total)
-        const searchResult = await searchAllZones(111, existingPlaceIds, neighborhoods, city.country, 5);
+        // Limit to 3 neighborhoods per run to prevent timeout (3 keywords × 3 neighborhoods × ~1s = ~9s total, safe under 30s limit)
+        const searchResult = await searchAllZones(111, existingPlaceIds, neighborhoods, city.country, 3);
 
         if (!searchResult.success) {
             throw new Error('Failed to search Google Places API');

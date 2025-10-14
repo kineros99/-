@@ -145,110 +145,82 @@ function getSearchKeywords(countryName) {
     const normalized = countryName.toLowerCase().trim();
 
     const keywordMap = {
-        // Brasil - 5 most effective terms (optimized for speed)
+        // Brasil - TOP 3 most effective terms (optimized for speed + timeout prevention)
         'brasil': [
-            'material de construção',      // Most common, covers general stores
-            'loja de ferragem',             // Hardware stores
-            'loja de tintas',               // Paint stores (very specific)
-            'depósito de construção',       // Large suppliers
-            'casa de materiais hidráulicos' // Plumbing specialists
+            'material de construção',      // #1 Most common, covers general stores
+            'loja de ferragem',             // #2 Hardware stores
+            'depósito de construção'        // #3 Large suppliers
         ],
         'brazil': [
             'material de construção',
             'loja de ferragem',
-            'loja de tintas',
-            'depósito de construção',
-            'casa de materiais hidráulicos'
+            'depósito de construção'
         ],
-        // USA - 5 most effective terms
+        // USA - TOP 3 most effective terms
         'united states': [
             'hardware store',
             'building materials store',
-            'home improvement store',
-            'paint store',
-            'plumbing supply store'
+            'home improvement store'
         ],
         'united states of america': [
             'hardware store',
             'building materials store',
-            'home improvement store',
-            'paint store',
-            'plumbing supply store'
+            'home improvement store'
         ],
         'usa': [
             'hardware store',
             'building materials store',
-            'home improvement store',
-            'paint store',
-            'plumbing supply store'
+            'home improvement store'
         ],
         'us': [
             'hardware store',
             'building materials store',
-            'home improvement store',
-            'paint store',
-            'plumbing supply store'
+            'home improvement store'
         ],
-        // Argentina - 5 most effective terms
+        // Argentina - TOP 3 most effective terms
         'argentina': [
             'corralón',
             'ferretería',
-            'materiales de construcción',
-            'pinturería',
-            'sanitarios'
+            'materiales de construcción'
         ],
-        // Mexico - 5 most effective terms
+        // Mexico - TOP 3 most effective terms
         'mexico': [
             'tlapalería',
             'ferretería',
-            'materiales para construcción',
-            'tienda de pintura',
-            'plomería'
+            'materiales para construcción'
         ],
-        // Spain - 5 most effective terms
+        // Spain - TOP 3 most effective terms
         'spain': [
             'ferretería',
             'materiales de construcción',
-            'almacén de construcción',
-            'tienda de pintura',
-            'materiales de fontanería'
+            'almacén de construcción'
         ],
         'españa': [
             'ferretería',
             'materiales de construcción',
-            'almacén de construcción',
-            'tienda de pintura',
-            'materiales de fontanería'
+            'almacén de construcción'
         ],
-        // Colombia, Peru, Chile (generic Spanish) - 5 most effective terms
+        // Colombia, Peru, Chile (generic Spanish) - TOP 3 most effective terms
         'colombia': [
             'ferretería',
             'materiales de construcción',
-            'depósito de materiales',
-            'pinturas',
-            'materiales de plomería'
+            'depósito de materiales'
         ],
         'peru': [
             'ferretería',
             'materiales de construcción',
-            'depósito de materiales',
-            'pinturas',
-            'materiales de plomería'
+            'depósito de materiales'
         ],
         'chile': [
             'ferretería',
             'materiales de construcción',
-            'depósito de materiales',
-            'pinturas',
-            'materiales de plomería'
+            'depósito de materiales'
         ],
-        // Portugal - 5 most effective terms
+        // Portugal - TOP 3 most effective terms
         'portugal': [
             'loja de ferragens',
             'materiais de construção',
-            'depósito de materiais',
-            'loja de tintas',
-            'casa de materiais hidráulicos'
+            'depósito de materiais'
         ]
     };
 
@@ -300,12 +272,21 @@ async function searchTextNearby(latitude, longitude, radius, textQuery, maxResul
             const errorText = await response.text();
             console.error(`[Text Search] ❌ HTTP error: ${response.status} - ${errorText}`);
             console.error(`[Text Search] Query: "${textQuery}" at [${latitude}, ${longitude}]`);
+            console.error(`[Text Search] Request body:`, JSON.stringify({
+                textQuery,
+                maxResultCount: maxResults,
+                locationBias: { circle: { center: { latitude, longitude }, radius } },
+                languageCode,
+                regionCode
+            }));
 
             // Check for common API errors
             if (response.status === 403) {
                 console.error(`[Text Search] 🚫 API KEY ERROR: Places API (New) may not be enabled or key is invalid`);
             } else if (response.status === 429) {
                 console.error(`[Text Search] ⏱️  RATE LIMIT: Too many requests. Quota may be exceeded.`);
+            } else if (response.status === 400) {
+                console.error(`[Text Search] ⚠️  BAD REQUEST: The string did not match the expected pattern - check coordinate format`);
             }
 
             return {
@@ -317,7 +298,19 @@ async function searchTextNearby(latitude, longitude, radius, textQuery, maxResul
             };
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            console.error(`[Text Search] ❌ Failed to parse JSON response:`, parseError.message);
+            console.error(`[Text Search] Response was not valid JSON - API may be returning error HTML`);
+            return {
+                success: false,
+                error: 'Invalid JSON response',
+                message: 'API returned non-JSON response (possibly HTML error page)',
+                details: parseError.toString()
+            };
+        }
 
         // Enhanced logging for debugging
         if (!data.places || data.places.length === 0) {
@@ -396,7 +389,7 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
     const keywords = getSearchKeywords(countryName);
 
     console.log(`[Keyword Search] Starting multi-keyword search for ${countryName}`);
-    console.log(`[Keyword Search] ${keywords.length} keywords to search`);
+    console.log(`[Keyword Search] ${keywords.length} keywords to search (optimized for speed)`);
     console.log(`[Keyword Search] Target: ${maxResults} total results`);
 
     const allStores = [];
@@ -550,9 +543,9 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
  * @param {Array} existingPlaceIds - Place IDs already in database (for duplicate prevention)
  * @param {Array} zones - Custom zones to search (if not provided, uses Rio zones)
  * @param {string} countryName - Country name for language/region settings
- * @param {number} maxNeighborhoods - Maximum neighborhoods to search (for timeout prevention, default: 5)
+ * @param {number} maxNeighborhoods - Maximum neighborhoods to search (for timeout prevention, default: 3)
  */
-export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil', maxNeighborhoods = 5) {
+export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil', maxNeighborhoods = 3) {
     // Use provided zones or fall back to Rio zones for backward compatibility
     const searchZones = zones || RIO_SEARCH_ZONES;
 

@@ -14,7 +14,7 @@
 
 body, html {
     height: 100%;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
     background: #f4f6f8;
     color: #343d56;
     overflow: hidden;
@@ -35,9 +35,26 @@ header {
     height: 60px;
 }
 
-header span {
+.header-brand {
     flex: 1;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.header-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 0.5px;
 }
 
 #toggle-sidebar-btn {
@@ -137,7 +154,12 @@ label {
     color: #343d56;
     font-weight: 600;
     margin-bottom: 5px;
+    margin-top: 10px;
     display: block;
+}
+
+label:first-of-type {
+    margin-top: 0;
 }
 
 select, input {
@@ -333,6 +355,17 @@ select:focus, input:focus {
 
 .action-btn:active {
     transform: scale(0.95);
+}
+
+.action-btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #999;
+}
+
+.action-btn-disabled:hover {
+    background: #999;
+    transform: none;
 }
 
 #map {
@@ -560,6 +593,14 @@ select:focus, input:focus {
         padding: 10px;
     }
 
+    .header-logo {
+        height: 32px;
+    }
+
+    .header-title {
+        font-size: 18px;
+    }
+
     .filter-section {
         padding: 12px;
     }
@@ -580,8 +621,12 @@ select:focus, input:focus {
         max-width: 280px;
     }
 
-    header span {
-        font-size: 14px;
+    .header-logo {
+        height: 28px;
+    }
+
+    .header-title {
+        font-size: 16px;
     }
 
     #toggle-sidebar-btn {
@@ -764,4 +809,94 @@ select:focus, input:focus {
         width: 25px;
         height: 25px;
     }
+}
+
+/* City Search Dropdown */
+.city-search-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.city-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid var(--sidebar-orange);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1100;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.city-dropdown.active {
+    display: block;
+}
+
+.city-option {
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.city-option:last-child {
+    border-bottom: none;
+    border-radius: 0 0 8px 8px;
+}
+
+.city-option:hover {
+    background: #f8f8f8;
+}
+
+.city-option-name {
+    font-weight: 600;
+    color: var(--primary-blue);
+    font-size: 14px;
+}
+
+.city-option-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 3px;
+}
+
+.selected-city-info {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: rgba(52, 61, 86, 0.1);
+    border-radius: 6px;
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selected-city-info i {
+    color: #4CAF50;
+}
+
+.clear-city-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 14px;
+    width: auto;
+}
+
+.clear-city-btn:hover {
+    background: rgba(220, 53, 69, 0.1);
+    transform: none;
 }

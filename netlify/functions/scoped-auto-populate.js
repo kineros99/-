@@ -8,7 +8,8 @@
  *
  * Store Limits Logic:
  * - 1st apuration: 666 stores
- * - 2nd-6th apurations: 20 stores
+ * - 2nd apuration: 666 stores
+ * - 3rd-6th apurations: 20 stores
  * - 7th+ apurations: 18 stores
  *
  * Endpoint: /.netlify/functions/scoped-auto-populate
@@ -30,7 +31,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123';
  */
 function calculateStoreLimit(apurationCount) {
     if (apurationCount === 0) return 666;   // First run
-    if (apurationCount >= 1 && apurationCount <= 5) return 20;  // 2nd-6th runs
+    if (apurationCount === 1) return 666;   // Second run (extended from 20 to 666)
+    if (apurationCount >= 2 && apurationCount <= 5) return 20;  // 3rd-6th runs
     if (apurationCount >= 6) return 18;     // 7th+ runs
     return 666; // Default fallback
 }
