@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Logger Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #status {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            min-height: 100px;
+        }
+        .success {
+            color: #4ade80;
+        }
+        .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Clear Logger Storage</h1>
+        <p>Click the button below to clear all logger data from localStorage</p>
+
+        <button onclick="clearLoggerData()">Clear Logger Data</button>
+        <button onclick="redirectToHome()">Go Back to App</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function clearLoggerData() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p class="info">🔍 Searching for logger data...</p>';
+
+            // Get all localStorage keys
+            const keys = Object.keys(localStorage);
+            const loggerKeys = keys.filter(k => k.startsWith('logger_'));
+
+            if (loggerKeys.length === 0) {
+                statusDiv.innerHTML = '<p class="success">✅ No logger data found! Storage is clean.</p>';
+                return;
+            }
+
+            // Show what we found
+            let foundList = '<p class="info">Found ' + loggerKeys.length + ' logger items:</p><ul style="text-align: left; display: inline-block;">';
+            loggerKeys.forEach(key => {
+                foundList += '<li>' + key + '</li>';
+            });
+            foundList += '</ul>';
+
+            statusDiv.innerHTML = foundList + '<p class="info">Removing...</p>';
+
+            // Remove all logger keys
+            loggerKeys.forEach(key => {
+                localStorage.removeItem(key);
+            });
+
+            setTimeout(() => {
+                statusDiv.innerHTML = '<p class="success">✅ Successfully cleared ' + loggerKeys.length + ' logger items!</p><p class="success">You can now go back to the app.</p>';
+            }, 500);
+        }
+
+        function redirectToHome() {
+            window.location.href = '/';
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            const keys = Object.keys(localStorage);
+            const loggerKeys = keys.filter(k => k.startsWith('logger_'));
+
+            if (loggerKeys.length > 0) {
+                document.getElementById('status').innerHTML =
+                    '<p class="info">⚠️ Found ' + loggerKeys.length + ' logger items in storage.<br>Click "Clear Logger Data" to remove them.</p>';
+            } else {
+                document.getElementById('status').innerHTML =
+                    '<p class="success">✅ Storage is clean! No logger data found.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

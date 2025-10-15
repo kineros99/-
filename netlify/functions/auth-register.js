@@ -55,12 +55,19 @@ export const handler = async (event) => {
     // ========================================================================
     // STEP 2: Check Google Places for existing business data
     // ========================================================================
+    // TWO-STAGE SEARCH: Pass business name for better results
     console.log(`[Registration] Checking Google Places for business at: ${store.endereco}`);
+    console.log(`[Registration] Business name: ${store.nome || 'Not provided'}`);
 
-    const placesResult = await findBusinessByAddress(store.endereco);
+    // Pass business name to enable two-stage search strategy
+    const placesResult = await findBusinessByAddress(store.endereco, store.nome);
 
-    if (placesResult.success && placesResult.found && !useGoogleData) {
-      // Found a business in Google's database - ask user if they want to use it
+    // Handle partial results (found business but couldn't get full details)
+    if (placesResult.success && placesResult.found && placesResult.partial) {
+      console.log(`[Registration] ⚠️ Found business but details unavailable: ${placesResult.basicInfo.name}`);
+      // Continue with user-provided data since we can't get Google's full details
+    } else if (placesResult.success && placesResult.found && placesResult.business && !useGoogleData) {
+      // Found a business in Google's database with full details - ask user if they want to use it
       console.log(`[Registration] ✓ Found business in Google: ${placesResult.business.name}`);
 
       return {
@@ -93,7 +100,7 @@ export const handler = async (event) => {
     let finalStoreData = { ...store };
     let dataSource = 'user_provided';
 
-    if (useGoogleData && placesResult.found) {
+    if (useGoogleData && placesResult.found && placesResult.business) {
       // User chose to use Google's data
       console.log(`[Registration] Using Google's business data`);
       finalStoreData.nome = placesResult.business.name || store.nome;
@@ -232,8 +239,8 @@ export const handler = async (event) => {
     // we should upgrade it to 'verified' instead of creating a duplicate
     let googlePlaceId = null;
 
-    if (placesResult.found && placesResult.business.placeId) {
-      googlePlaceId = placesResult.business.placeId;
+    if (placesResult.found && placesResult.placeId) {
+      googlePlaceId = placesResult.placeId;
 
       console.log(`[Registration] Checking if store with Place ID ${googlePlaceId} exists as auto-added...`);
 

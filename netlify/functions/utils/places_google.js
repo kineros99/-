@@ -28,8 +28,11 @@ const PLACES_DETAILS_URL = 'https://places.googleapis.com/v1';
 /**
  * Search for a place by address/name using Text Search
  * Returns place_id which can be used to get details
+ *
+ * @param {string} address - The address to search for
+ * @param {string} businessName - Optional business name for better results
  */
-export async function searchPlaceByAddress(address) {
+export async function searchPlaceByAddress(address, businessName = null) {
     if (!address || typeof address !== 'string') {
         return {
             success: false,
@@ -47,17 +50,25 @@ export async function searchPlaceByAddress(address) {
     }
 
     try {
-        console.log(`[Places API] Searching for business at: "${address}"`);
+        // Build search query - prioritize business name + address for better results
+        let searchQuery = address;
+        if (businessName && businessName.trim()) {
+            searchQuery = `${businessName}, ${address}`;
+            console.log(`[Places API] Searching with business name: "${searchQuery}"`);
+        } else {
+            console.log(`[Places API] Searching with address only: "${searchQuery}"`);
+        }
 
         const response = await fetch(PLACES_SEARCH_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Goog-Api-Key': GOOGLE_API_KEY,
-                'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.types,places.businessStatus'
+                // Request ALL fields in one call (New API includes everything in search)
+                'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.types,places.businessStatus,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.location'
             },
             body: JSON.stringify({
-                textQuery: address,
+                textQuery: searchQuery,
                 languageCode: 'pt-BR',
                 regionCode: 'BR',
                 maxResultCount: 1
@@ -92,14 +103,21 @@ export async function searchPlaceByAddress(address) {
         console.log(`[Places API] ✓ Found business: ${place.displayName?.text || 'Unknown'}`);
         console.log(`[Places API] Place ID: ${place.id}`);
 
+        // New API returns all data in search response - no need for second call!
         return {
             success: true,
             found: true,
             placeId: place.id,
             name: place.displayName?.text || null,
             address: place.formattedAddress || null,
+            phone: place.nationalPhoneNumber || place.internationalPhoneNumber || null,
+            website: place.websiteUri || null,
             types: place.types || [],
-            businessStatus: place.businessStatus || 'UNKNOWN'
+            businessStatus: place.businessStatus || 'UNKNOWN',
+            location: place.location ? {
+                latitude: place.location.latitude,
+                longitude: place.location.longitude
+            } : null
         };
 
     } catch (error) {
@@ -192,59 +210,139 @@ export async function getPlaceDetails(placeId) {
 /**
  * Combined function: Search and get details in one call
  * This is the main function to use for store registration
+ *
+ * TWO-STAGE SEARCH STRATEGY:
+ * Stage 1: Search with business name + address (best results for existing businesses)
+ * Stage 2: Fallback to address-only search if Stage 1 fails or returns incomplete data
+ *
+ * Note: Google Places API (New) returns all data in the search response,
+ * so we don't need a separate details call
+ *
+ * @param {string} address - The address to search for
+ * @param {string} businessName - Optional business name for better results
  */
-export async function findBusinessByAddress(address) {
-    console.log(`[Places API] Looking up business at: "${address}"`);
+export async function findBusinessByAddress(address, businessName = null) {
+    console.log(`[Places API] ═══════════════════════════════════════════════`);
+    console.log(`[Places API] STARTING TWO-STAGE SEARCH`);
+    console.log(`[Places API] Address: "${address}"`);
+    console.log(`[Places API] Business Name: "${businessName || 'Not provided'}"`);
+    console.log(`[Places API] ═══════════════════════════════════════════════`);
 
-    // Step 1: Search for the place
-    const searchResult = await searchPlaceByAddress(address);
+    let stage1Result = null;
+    let stage2Result = null;
 
-    if (!searchResult.success) {
-        return searchResult;
+    // ===== STAGE 1: Try with business name + address (if name provided) =====
+    if (businessName && businessName.trim()) {
+        console.log(`\n[Places API] 🔍 STAGE 1: Searching with business name + address...`);
+        stage1Result = await searchPlaceByAddress(address, businessName);
+
+        if (!stage1Result.success) {
+            console.log(`[Places API] ⚠️  Stage 1 failed with error: ${stage1Result.error}`);
+            // Continue to Stage 2
+        } else if (!stage1Result.found) {
+            console.log(`[Places API] ⚠️  Stage 1: No results found`);
+            // Continue to Stage 2
+        } else {
+            // Check if we got complete data
+            const hasCompleteData = stage1Result.phone || stage1Result.website;
+
+            if (hasCompleteData) {
+                console.log(`[Places API] ✅ STAGE 1 SUCCESS: Complete business data found!`);
+                console.log(`[Places API]    Name: ${stage1Result.name}`);
+                console.log(`[Places API]    Phone: ${stage1Result.phone || 'N/A'}`);
+                console.log(`[Places API]    Website: ${stage1Result.website || 'N/A'}`);
+                console.log(`[Places API] ═══════════════════════════════════════════════`);
+
+                return {
+                    success: true,
+                    found: true,
+                    placeId: stage1Result.placeId,
+                    business: {
+                        name: stage1Result.name,
+                        address: stage1Result.address,
+                        phone: stage1Result.phone,
+                        website: stage1Result.website,
+                        businessStatus: stage1Result.businessStatus,
+                        types: stage1Result.types,
+                        location: stage1Result.location
+                    },
+                    source: 'Google Places API (Business Name + Address)',
+                    searchStrategy: 'stage1'
+                };
+            } else {
+                console.log(`[Places API] ⚠️  Stage 1: Found location but incomplete data (no phone/website)`);
+                console.log(`[Places API]    Will try Stage 2 for better results...`);
+                // Continue to Stage 2
+            }
+        }
+    } else {
+        console.log(`[Places API] ⏭️  STAGE 1 SKIPPED: No business name provided`);
     }
 
-    if (!searchResult.found) {
+    // ===== STAGE 2: Fallback to address-only search =====
+    console.log(`\n[Places API] 🔍 STAGE 2: Searching with address only...`);
+    stage2Result = await searchPlaceByAddress(address, null);
+
+    if (!stage2Result.success) {
+        console.log(`[Places API] ❌ STAGE 2 FAILED`);
+        console.log(`[Places API] ═══════════════════════════════════════════════`);
+        return stage2Result;
+    }
+
+    if (!stage2Result.found) {
+        console.log(`[Places API] ❌ STAGE 2: No business found at this address`);
+        console.log(`[Places API] ═══════════════════════════════════════════════`);
         return {
             success: true,
             found: false,
             message: 'No business registered at this address in Google database',
-            suggestion: 'Will use user-provided information'
+            suggestion: 'Will use user-provided information',
+            searchStrategy: 'stage2_not_found'
         };
     }
 
-    // Step 2: Get detailed information
-    const detailsResult = await getPlaceDetails(searchResult.placeId);
+    // Check if Stage 2 has complete data
+    const hasCompleteData = stage2Result.phone || stage2Result.website;
 
-    if (!detailsResult.success) {
+    if (hasCompleteData) {
+        console.log(`[Places API] ✅ STAGE 2 SUCCESS: Complete business data found!`);
+        console.log(`[Places API]    Name: ${stage2Result.name}`);
+        console.log(`[Places API]    Phone: ${stage2Result.phone || 'N/A'}`);
+        console.log(`[Places API]    Website: ${stage2Result.website || 'N/A'}`);
+        console.log(`[Places API] ═══════════════════════════════════════════════`);
+
         return {
             success: true,
             found: true,
-            partial: true,
-            message: 'Found business but could not retrieve full details',
-            basicInfo: {
-                name: searchResult.name,
-                address: searchResult.address,
-                placeId: searchResult.placeId
-            }
+            placeId: stage2Result.placeId,
+            business: {
+                name: stage2Result.name,
+                address: stage2Result.address,
+                phone: stage2Result.phone,
+                website: stage2Result.website,
+                businessStatus: stage2Result.businessStatus,
+                types: stage2Result.types,
+                location: stage2Result.location
+            },
+            source: 'Google Places API (Address Only)',
+            searchStrategy: 'stage2'
         };
     }
 
-    // Step 3: Return combined result
-    console.log(`[Places API] ✓ Complete business data retrieved`);
+    // Found location but no complete business data
+    console.log(`[Places API] ⚠️  STAGE 2: Found location but no business contact details`);
+    console.log(`[Places API] ═══════════════════════════════════════════════`);
 
     return {
         success: true,
         found: true,
-        placeId: searchResult.placeId,
-        business: {
-            name: detailsResult.details.name,
-            address: detailsResult.details.address,
-            phone: detailsResult.details.phone,
-            website: detailsResult.details.website,
-            businessStatus: detailsResult.details.businessStatus,
-            types: detailsResult.details.types,
-            location: detailsResult.details.location
+        partial: true,
+        message: 'Found location but no business contact details available',
+        basicInfo: {
+            name: stage2Result.name,
+            address: stage2Result.address,
+            placeId: stage2Result.placeId
         },
-        source: 'Google Places API'
+        searchStrategy: 'stage2_partial'
     };
 }
