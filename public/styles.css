@@ -1,7 +1,7 @@
 :root {
     --primary-blue: #343D56;
     --hover-blue: #2a2f45;
-    --sidebar-orange: rgba(255,111,0,0.7087);
+    --sidebar-orange: rgba(255,111,0,0.99);
     --favorite-yellow: #FFD700;
     --route-color: #4CAF50;
 }
@@ -15,7 +15,8 @@
 body, html {
     height: 100%;
     font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-    background: #f4f6f8;
+    /* Dark background so nothing shows through translucent footer */
+    background: #2a2f3e;
     color: #343d56;
     overflow: hidden;
 }
@@ -25,6 +26,10 @@ header {
     background-color: var(--primary-blue);
     color: white;
     padding: 15px;
+    /* Safe area support for phone notches */
+    padding-left: max(15px, env(safe-area-inset-left));
+    padding-right: max(15px, env(safe-area-inset-right));
+    padding-top: max(15px, env(safe-area-inset-top));
     font-size: 20px;
     display: flex;
     align-items: center;
@@ -32,7 +37,8 @@ header {
     font-weight: bold;
     z-index: 1001;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: 60px;
+    /* Adjust height for notched phones */
+    height: max(60px, calc(60px + env(safe-area-inset-top)));
 }
 
 .header-brand {
@@ -59,7 +65,8 @@ header {
 
 #toggle-sidebar-btn {
     position: absolute;
-    left: 15px;
+    /* Safe area support - prevents notch cutoff */
+    left: max(15px, calc(15px + env(safe-area-inset-left)));
     top: 50%;
     transform: translateY(-50%);
     background: var(--sidebar-orange);
@@ -86,7 +93,8 @@ header {
 
 .wrapper {
     display: flex;
-    height: calc(100vh - 60px - 49px); /* Account for header and footer */
+    /* Map extends full viewport - footer overlays on top */
+    height: calc(100vh - max(60px, calc(60px + env(safe-area-inset-top))));
     position: relative;
     transition: margin-left 0.3s ease;
 }
@@ -97,18 +105,22 @@ header {
     opacity: 1;
     border-radius: 0 12px 12px 0;
     padding: 20px;
+    /* Add padding to bottom so content doesn't hide under footer */
+    padding-bottom: max(60px, calc(60px + env(safe-area-inset-bottom)));
     display: flex;
     flex-direction: column;
     gap: 15px;
     overflow-y: auto;
     overflow-x: hidden;
-    transition: transform 0.4s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* iOS-style smooth easing */
     z-index: 1000;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     position: fixed;
-    top: 60px;
+    /* Adjust for safe areas on notched phones */
+    top: max(60px, calc(60px + env(safe-area-inset-top)));
     left: 0;
-    height: calc(100vh - 60px - 49px); /* Account for footer */
+    /* Full height minus header - footer overlays on top */
+    height: calc(100vh - max(60px, calc(60px + env(safe-area-inset-top))));
 }
 
 #sidebar.collapsed {
@@ -122,16 +134,21 @@ header {
     left: 0;
     width: 100%;
     height: calc(100vh - 60px);
-    background: rgba(0,0,0,0.5);
+    /* REMOVED: White overlay - now fully transparent */
+    background: transparent;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.4s ease;
     z-index: 999;
+    /* Disable pointer events so it doesn't block interaction */
+    pointer-events: none;
 }
 
 #overlay.active {
-    opacity: 1;
-    visibility: visible;
+    /* Keep transparent even when active */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .filter-section {
@@ -375,7 +392,8 @@ select:focus, input:focus {
     min-height: 400px;
     position: relative;
     z-index: 1;
-    padding-bottom: 60px;
+    /* Footer is fixed overlay - map extends underneath */
+    padding-bottom: 0;
 }
 
 .loja-popup {
@@ -547,6 +565,12 @@ select:focus, input:focus {
 @media (min-width: 769px) {
     .wrapper {
         padding-left: 350px;
+        transition: padding-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Remove wrapper padding when sidebar is collapsed - map fills full width */
+    .wrapper.sidebar-collapsed {
+        padding-left: 0;
     }
 }
 
@@ -560,7 +584,8 @@ select:focus, input:focus {
 
     #map {
         width: 100%;
-        height: calc(100vh - 60px);
+        /* Full viewport height - footer overlays on top */
+        height: 100vh;
     }
 
     .wrapper {
@@ -693,7 +718,8 @@ select:focus, input:focus {
 /* Admin Button */
 #admin-btn {
     position: absolute;
-    right: 15px;
+    /* Safe area support - prevents notch cutoff */
+    right: max(15px, calc(15px + env(safe-area-inset-right)));
     top: 50%;
     transform: translateY(-50%);
     width: 18px;
@@ -742,16 +768,25 @@ select:focus, input:focus {
     }
 }
 
-/* Partner Footer */
+/* Partner Footer - Translucent Glassmorphism Style */
 #partner-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(52, 61, 86, 0.95);
+    /* TRANSLUCENT GLASS: Subtle dark tint with blur for readability */
+    background: rgba(52, 61, 86, 0.3);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Subtle glass edge highlight */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 8px 0;
-    z-index: 900;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    /* Safe area support for bottom (iPhone home indicator) */
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    /* Below sidebar (1000) but above map (1) */
+    z-index: 500;
+    /* Softer shadow for glass effect */
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.2);
 }
 
 .partner-container {
@@ -767,7 +802,8 @@ select:focus, input:focus {
 .partner-logo-slot {
     width: 33px;
     height: 33px;
-    background: rgba(255, 255, 255, 0.1);
+    /* TRANSPARENT: No background - fully see-through for glass effect */
+    background: transparent;
     border: 2px dashed rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     display: flex;
@@ -777,7 +813,8 @@ select:focus, input:focus {
 }
 
 .partner-logo-slot:hover {
-    background: rgba(255, 255, 255, 0.2);
+    /* Subtle highlight on hover - still mostly transparent */
+    background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.5);
 }
 

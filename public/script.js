@@ -518,11 +518,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleSidebar = (forceCollapse = false) => {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
+        const wrapper = document.querySelector('.wrapper');
         const shouldCollapse = forceCollapse || !sidebar.classList.contains('collapsed');
-        
+
         sidebar.classList.toggle('collapsed', shouldCollapse);
         overlay.classList.toggle('active', !shouldCollapse);
-        
+        wrapper.classList.toggle('sidebar-collapsed', shouldCollapse);
+
         // Ajusta o tamanho do mapa para preencher o espaço
         setTimeout(() => map.invalidateSize(), 400);
     };
