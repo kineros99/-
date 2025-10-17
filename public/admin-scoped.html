@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Scoped Auto-Population | Encarregado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="logger.css" />
     <style>
         * {
             box-sizing: border-box;
@@ -414,6 +415,169 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        /* Deselect button styles */
+        .deselect-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #FFD700; /* Gold */
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .deselect-btn:hover {
+            background: #FFC700; /* Darker gold */
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .deselect-btn i {
+            color: white;
+            font-size: 18px;
+        }
+
+        .input-with-deselect {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-with-deselect select,
+        .input-with-deselect input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* Workflow tutorial banner */
+        .tutorial-banner {
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            position: relative;
+        }
+
+        .tutorial-banner-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tutorial-banner-close:hover {
+            color: #5568d3;
+            transform: rotate(90deg);
+        }
+
+        .tutorial-banner h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tutorial-step {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tutorial-step-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .tutorial-step-content {
+            flex: 1;
+        }
+
+        .tutorial-step-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .tutorial-step-desc {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tutorial-skip-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 25px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tutorial-skip-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        /* Help button styles */
+        .help-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+            vertical-align: middle;
+        }
+
+        .help-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .header h1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -423,26 +587,109 @@
         </a>
 
         <div class="header">
-            <h1><i class="fas fa-bullseye"></i> Scoped Auto-Population</h1>
+            <h1>
+                <i class="fas fa-bullseye"></i> Scoped Auto-Population
+                <button class="help-button" onclick="toggleTutorial()" title="Ajuda - Fluxo de Trabalho">
+                    <i class="fas fa-question"></i>
+                </button>
+            </h1>
             <p>Apuração direcionada por cidade e bairro com limites dinâmicos</p>
+        </div>
+
+        <!-- Workflow Tutorial Banner -->
+        <div id="tutorial-banner" class="tutorial-banner" style="display: none;">
+            <button class="tutorial-banner-close" onclick="dismissTutorial()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3><i class="fas fa-graduation-cap"></i> Bem-vindo ao Scoped Auto-Population!</h3>
+            <p style="margin-bottom: 20px; color: #666;">Este é o fluxo de trabalho recomendado para gerenciar dados geográficos:</p>
+
+            <div class="tutorial-step">
+                <div class="tutorial-step-icon">1️⃣</div>
+                <div class="tutorial-step-content">
+                    <div class="tutorial-step-title">Descobrir Dados Geográficos (Esta Página)</div>
+                    <div class="tutorial-step-desc">Use esta página para descobrir estados, cidades e bairros de novos países. Os dados são salvos no banco de dados para uso futuro.</div>
+                </div>
+            </div>
+
+            <div class="tutorial-step">
+                <div class="tutorial-step-icon">2️⃣</div>
+                <div class="tutorial-step-content">
+                    <div class="tutorial-step-title">Auto-Population (Página Admin Principal)</div>
+                    <div class="tutorial-step-desc">Após descobrir os dados, use a <a href="admin.html" style="color: #667eea; font-weight: bold;">página Admin Principal</a> para executar auto-population em larga escala com filtros por país/estado/cidade.</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 15px; padding-top: 15px; padding-bottom: 40px; border-top: 1px solid #e1e5e9; color: #666; font-size: 14px;">
+                💡 <strong>Dica:</strong> Se um país não tem dados geográficos, você precisa descobri-los aqui primeiro antes de usar na página principal.
+            </p>
+
+            <button class="tutorial-skip-btn" onclick="dismissTutorial()">
+                <i class="fas fa-forward"></i> Pular Tutorial
+            </button>
         </div>
 
         <div class="control-panel">
             <h2><i class="fas fa-cog"></i> Configuração da Apuração</h2>
 
-            <!-- STEP 1: Search City -->
+            <!-- STEP 0: Select Country -->
             <div class="step-section">
-                <div class="step-title">1️⃣ Buscar Cidade</div>
-                <div class="city-search-container">
-                    <input
-                        type="text"
-                        id="city-search"
-                        class="form-input"
-                        placeholder="Digite o nome da cidade (ex: Rio de Janeiro, São Paulo, etc.)"
-                        autocomplete="off"
-                    />
-                    <div id="city-dropdown" class="city-dropdown"></div>
+                <div class="step-title">0️⃣ Selecionar País</div>
+                <div class="input-with-deselect">
+                    <button class="deselect-btn" id="deselect-country-btn" style="display: none;" title="Desselecionar País">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <select id="country-select" class="form-input">
+                        <option value="">Carregando países...</option>
+                    </select>
                 </div>
+                <button id="confirm-country-btn" class="run-button" style="margin-top: 15px; padding: 12px;" disabled>
+                    <i class="fas fa-check"></i>
+                    <span>Confirmar País</span>
+                </button>
+                <div id="selected-country-info" style="margin-top: 10px; color: #667eea; font-weight: bold; display: none;">
+                    <i class="fas fa-check-circle"></i> <span id="selected-country-name"></span>
+                </div>
+            </div>
+
+            <!-- STEP 0.5: Select State -->
+            <div class="step-section" id="state-section" style="display: none;">
+                <div class="step-title">0.5️⃣ Selecionar Estado/Região</div>
+                <div class="input-with-deselect">
+                    <button class="deselect-btn" id="deselect-state-btn" style="display: none;" title="Desselecionar Estado">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <select id="state-select" class="form-input">
+                        <option value="">Selecione um país primeiro...</option>
+                    </select>
+                </div>
+                <button id="confirm-state-btn" class="run-button" style="margin-top: 15px; padding: 12px;" disabled>
+                    <i class="fas fa-check"></i>
+                    <span>Confirmar Estado</span>
+                </button>
+                <div id="selected-state-info" style="margin-top: 10px; color: #667eea; font-weight: bold; display: none;">
+                    <i class="fas fa-check-circle"></i> <span id="selected-state-name"></span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Select City -->
+            <div class="step-section" id="city-section">
+                <div class="step-title">1️⃣ Selecionar Cidade</div>
+                <div id="city-filter-info" style="margin-bottom: 10px; padding: 10px; background: #f0f8ff; border-radius: 8px; display: none;">
+                    <strong>Filtro ativo:</strong> <span id="city-filter-text"></span>
+                </div>
+                <div class="input-with-deselect">
+                    <button class="deselect-btn" id="deselect-city-btn" style="display: none;" title="Desselecionar Cidade">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <select id="city-select" class="form-input" disabled>
+                        <option value="">Selecione um estado primeiro...</option>
+                    </select>
+                </div>
+                <button id="confirm-city-btn" class="run-button" style="margin-top: 15px; padding: 12px;" disabled>
+                    <i class="fas fa-check"></i>
+                    <span>Confirmar Cidade</span>
+                </button>
                 <div id="selected-city-info" style="margin-top: 10px; color: #667eea; font-weight: bold; display: none;">
                     <i class="fas fa-check-circle"></i> <span id="selected-city-name"></span>
                 </div>
@@ -457,6 +704,72 @@
                 </button>
                 <div id="neighborhoods-container" class="neighborhoods-grid">
                     <div class="loading">Selecione uma cidade primeiro...</div>
+                </div>
+            </div>
+
+            <!-- STEP 2.5: Store Categories -->
+            <div class="step-section">
+                <div class="step-title">2.5️⃣ Tipos de Lojas (Categorias)</div>
+                <div class="warning-box">
+                    <strong>⚠️ Atenção:</strong> Mais categorias = mais chamadas à API = maior tempo de execução.
+                    <br>O limite máximo de segurança é <strong>10 chamadas (~20 segundos)</strong> para evitar timeouts.
+                </div>
+                <div id="category-selector" style="margin-top: 15px;">
+                    <label style="display: block; margin-bottom: 10px;">
+                        <input type="radio" name="categoryChoice" value="all" checked style="margin-right: 8px;">
+                        <strong>Todas as Categorias</strong> (recomendado apenas para 1 bairro)
+                    </label>
+                    <div style="margin-left: 25px; margin-bottom: 15px; color: #666; font-size: 13px;">
+                        6 categorias: Material de Construção, Hidráulica, Ferragem, Tintas, Pintura, Materiais Elétricos
+                    </div>
+
+                    <label style="display: block; margin-bottom: 10px;">
+                        <input type="radio" name="categoryChoice" value="general">
+                        <strong>Apenas Gerais</strong> (mais rápido - 1 categoria)
+                    </label>
+                    <div style="margin-left: 25px; margin-bottom: 15px; color: #666; font-size: 13px;">
+                        Material de Construção geral e Depósitos
+                    </div>
+
+                    <label style="display: block; margin-bottom: 10px;">
+                        <input type="radio" name="categoryChoice" value="custom">
+                        <strong>Personalizado</strong> (selecione categorias específicas)
+                    </label>
+                    <div id="custom-categories" style="margin-left: 25px; display: none; margin-top: 10px;">
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="checkbox" class="category-checkbox" value="general" style="margin-right: 8px;">
+                            Material de Construção (Geral)
+                        </label>
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="checkbox" class="category-checkbox" value="plumbing" style="margin-right: 8px;">
+                            Loja de Hidráulica
+                        </label>
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="checkbox" class="category-checkbox" value="hardware" style="margin-right: 8px;">
+                            Loja de Ferragem
+                        </label>
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="checkbox" class="category-checkbox" value="paint" style="margin-right: 8px;">
+                            Loja de Tintas/Pintura
+                        </label>
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="checkbox" class="category-checkbox" value="electrical" style="margin-right: 8px;">
+                            Loja de Materiais Elétricos
+                        </label>
+                    </div>
+                </div>
+
+                <div id="api-estimate" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h4 style="margin-bottom: 10px; color: #667eea;">📊 Estimativa de Execução</h4>
+                    <div style="margin-bottom: 5px;">
+                        <strong>Chamadas à API:</strong> <span id="estimate-api-calls">0</span>
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        <strong>Tempo estimado:</strong> <span id="estimate-time">0s</span>
+                    </div>
+                    <div id="timeout-warning" style="display: none; color: #dc3545; margin-top: 10px; font-weight: bold;">
+                        ⚠️ ATENÇÃO: Risco de timeout! Reduza o número de bairros ou categorias.
+                    </div>
                 </div>
             </div>
 
@@ -526,8 +839,31 @@
         <a href="index.html" class="back-link">
             <i class="fas fa-arrow-left"></i> Voltar para o Mapa
         </a>
+
+        <!-- Floating Log Overlay -->
+        <div id="floating-log" class="floating-log">
+            <div class="floating-log-header" onclick="toggleFloatingLog()">
+                <h4>
+                    <i class="fas fa-terminal"></i>
+                    <span id="floating-log-title">Progresso</span>
+                    <span id="floating-log-badge" class="floating-log-badge" style="display: none;">0</span>
+                </h4>
+                <div class="floating-log-controls">
+                    <button class="floating-log-btn" onclick="event.stopPropagation(); minimizeFloatingLog();" title="Minimizar">
+                        <i class="fas fa-window-minimize"></i>
+                    </button>
+                    <button class="floating-log-btn" onclick="event.stopPropagation(); closeFloatingLog();" title="Fechar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="floating-log-content" id="floating-log-content">
+                <div class="floating-log-entry info">Aguardando operação...</div>
+            </div>
+        </div>
     </div>
 
+    <script src="logger.js"></script>
     <script src="admin-scoped.js"></script>
 </body>
 </html>
