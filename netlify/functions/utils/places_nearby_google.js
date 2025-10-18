@@ -138,94 +138,493 @@ function getCountryConfig(countryName) {
 }
 
 /**
- * Get search keywords for construction stores by country
- * Returns array of search terms in the local language
+ * Get search keywords for construction stores by country - LEGACY (backward compatibility)
+ * Returns array of top 3 search terms in the local language
+ * @deprecated Use getSearchKeywordsByCategory() for better control
  */
 function getSearchKeywords(countryName) {
+    // Return top 3 terms from each country (general + plumbing + hardware)
+    const categories = ['general', 'plumbing', 'hardware'];
+    const keywords = getSearchKeywordsByCategory(countryName, categories);
+    return keywords.slice(0, 3); // Return max 3 for backward compatibility
+}
+
+/**
+ * Get search keywords for construction stores by country AND category
+ * Returns array of search terms based on selected categories
+ *
+ * Categories:
+ * - general: General construction materials stores (material de construção, depósito)
+ * - plumbing: Plumbing stores (loja de hidráulica, materiais hidráulicos)
+ * - hardware: Hardware/tools stores (loja de ferragem, loja de ferramentas)
+ * - paint: Paint stores (loja de tintas, loja de pintura)
+ * - electrical: Electrical materials stores (loja de materiais elétricos)
+ *
+ * @param {string} countryName - Country name (Brasil, United States, etc.)
+ * @param {Array<string>} categories - Array of category names (default: ['general'])
+ * @returns {Array<string>} Array of search keywords in local language
+ */
+function getSearchKeywordsByCategory(countryName, categories = ['general']) {
     const normalized = countryName.toLowerCase().trim();
 
-    const keywordMap = {
-        // Brasil - TOP 3 most effective terms (optimized for speed + timeout prevention)
-        'brasil': [
-            'material de construção',      // #1 Most common, covers general stores
-            'loja de ferragem',             // #2 Hardware stores
-            'depósito de construção'        // #3 Large suppliers
-        ],
-        'brazil': [
-            'material de construção',
-            'loja de ferragem',
-            'depósito de construção'
-        ],
-        // USA - TOP 3 most effective terms
-        'united states': [
-            'hardware store',
-            'building materials store',
-            'home improvement store'
-        ],
-        'united states of america': [
-            'hardware store',
-            'building materials store',
-            'home improvement store'
-        ],
-        'usa': [
-            'hardware store',
-            'building materials store',
-            'home improvement store'
-        ],
-        'us': [
-            'hardware store',
-            'building materials store',
-            'home improvement store'
-        ],
-        // Argentina - TOP 3 most effective terms
-        'argentina': [
-            'corralón',
-            'ferretería',
-            'materiales de construcción'
-        ],
-        // Mexico - TOP 3 most effective terms
-        'mexico': [
-            'tlapalería',
-            'ferretería',
-            'materiales para construcción'
-        ],
-        // Spain - TOP 3 most effective terms
-        'spain': [
-            'ferretería',
-            'materiales de construcción',
-            'almacén de construcción'
-        ],
-        'españa': [
-            'ferretería',
-            'materiales de construcción',
-            'almacén de construcción'
-        ],
-        // Colombia, Peru, Chile (generic Spanish) - TOP 3 most effective terms
-        'colombia': [
-            'ferretería',
-            'materiales de construcción',
-            'depósito de materiales'
-        ],
-        'peru': [
-            'ferretería',
-            'materiales de construcción',
-            'depósito de materiales'
-        ],
-        'chile': [
-            'ferretería',
-            'materiales de construcción',
-            'depósito de materiales'
-        ],
-        // Portugal - TOP 3 most effective terms
-        'portugal': [
-            'loja de ferragens',
-            'materiais de construção',
-            'depósito de materiais'
-        ]
+    // Category-based keyword mappings (6 categories per country)
+    const categoryKeywords = {
+        // Brasil / Brazil
+        'brasil': {
+            general: ['material de construção', 'depósito de construção'],
+            plumbing: ['loja de hidráulica', 'materiais hidráulicos'],
+            hardware: ['loja de ferragem', 'loja de ferramentas'],
+            paint: ['loja de tintas', 'loja de pintura'],
+            electrical: ['loja de materiais elétricos', 'material elétrico']
+        },
+        'brazil': {
+            general: ['material de construção', 'depósito de construção'],
+            plumbing: ['loja de hidráulica', 'materiais hidráulicos'],
+            hardware: ['loja de ferragem', 'loja de ferramentas'],
+            paint: ['loja de tintas', 'loja de pintura'],
+            electrical: ['loja de materiais elétricos', 'material elétrico']
+        },
+
+        // United States
+        'united states': {
+            general: ['hardware store', 'building materials store'],
+            plumbing: ['plumbing supply store', 'plumbing store'],
+            hardware: ['hardware store', 'tool store'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical supply store', 'electrical materials']
+        },
+        'united states of america': {
+            general: ['hardware store', 'building materials store'],
+            plumbing: ['plumbing supply store', 'plumbing store'],
+            hardware: ['hardware store', 'tool store'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical supply store', 'electrical materials']
+        },
+        'usa': {
+            general: ['hardware store', 'building materials store'],
+            plumbing: ['plumbing supply store', 'plumbing store'],
+            hardware: ['hardware store', 'tool store'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical supply store', 'electrical materials']
+        },
+        'us': {
+            general: ['hardware store', 'building materials store'],
+            plumbing: ['plumbing supply store', 'plumbing store'],
+            hardware: ['hardware store', 'tool store'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical supply store', 'electrical materials']
+        },
+
+        // Argentina
+        'argentina': {
+            general: ['corralón', 'materiales de construcción'],
+            plumbing: ['sanitarios', 'plomería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pinturería', 'pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Mexico
+        'mexico': {
+            general: ['tlapalería', 'materiales para construcción'],
+            plumbing: ['plomería', 'materiales de plomería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Spain
+        'spain': {
+            general: ['ferretería', 'almacén de construcción'],
+            plumbing: ['fontanería', 'materiales de fontanería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+        'españa': {
+            general: ['ferretería', 'almacén de construcción'],
+            plumbing: ['fontanería', 'materiales de fontanería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Colombia
+        'colombia': {
+            general: ['ferretería', 'depósito de materiales'],
+            plumbing: ['plomería', 'materiales de plomería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Peru
+        'peru': {
+            general: ['ferretería', 'materiales de construcción'],
+            plumbing: ['grifería', 'materiales de plomería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Chile
+        'chile': {
+            general: ['ferretería', 'materiales de construcción'],
+            plumbing: ['grifería', 'materiales de plomería'],
+            hardware: ['ferretería', 'herramientas'],
+            paint: ['pintura', 'tienda de pinturas'],
+            electrical: ['electricidad', 'materiales eléctricos']
+        },
+
+        // Portugal
+        'portugal': {
+            general: ['loja de ferragens', 'depósito de materiais'],
+            plumbing: ['loja de canalização', 'materiais hidráulicos'],
+            hardware: ['loja de ferragens', 'ferramentas'],
+            paint: ['loja de tintas', 'tintas'],
+            electrical: ['materiais eléctricos', 'electricidade']
+        },
+
+        // Canada
+        'canada': {
+            general: ['hardware store', 'building materials store'],
+            plumbing: ['plumbing supply store', 'plumbing store'],
+            hardware: ['hardware store', 'tool store'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical supply store', 'electrical materials']
+        },
+
+        // United Kingdom
+        'united kingdom': {
+            general: ['builders merchant', 'building materials'],
+            plumbing: ['plumbers merchant', 'plumbing supplies'],
+            hardware: ['hardware shop', 'tool shop'],
+            paint: ['paint shop', 'decorating supplies'],
+            electrical: ['electrical wholesaler', 'electrical supplies']
+        },
+        'uk': {
+            general: ['builders merchant', 'building materials'],
+            plumbing: ['plumbers merchant', 'plumbing supplies'],
+            hardware: ['hardware shop', 'tool shop'],
+            paint: ['paint shop', 'decorating supplies'],
+            electrical: ['electrical wholesaler', 'electrical supplies']
+        },
+
+        // France
+        'france': {
+            general: ['quincaillerie', 'matériaux de construction'],
+            plumbing: ['plomberie', 'matériel de plomberie'],
+            hardware: ['quincaillerie', 'outillage'],
+            paint: ['peinture', 'magasin de peinture'],
+            electrical: ['électricité', 'matériel électrique']
+        },
+
+        // Germany
+        'germany': {
+            general: ['baumarkt', 'baustoffhandel'],
+            plumbing: ['sanitärhandel', 'sanitärbedarf'],
+            hardware: ['eisenwarenhandel', 'werkzeuge'],
+            paint: ['farbenhandel', 'lackiererei'],
+            electrical: ['elektrohandel', 'elektromaterial']
+        },
+        'deutschland': {
+            general: ['baumarkt', 'baustoffhandel'],
+            plumbing: ['sanitärhandel', 'sanitärbedarf'],
+            hardware: ['eisenwarenhandel', 'werkzeuge'],
+            paint: ['farbenhandel', 'lackiererei'],
+            electrical: ['elektrohandel', 'elektromaterial']
+        },
+
+        // Italy
+        'italy': {
+            general: ['ferramenta', 'materiali edili'],
+            plumbing: ['idraulica', 'materiali idraulici'],
+            hardware: ['ferramenta', 'utensili'],
+            paint: ['colorificio', 'vernici'],
+            electrical: ['materiale elettrico', 'elettricità']
+        },
+        'italia': {
+            general: ['ferramenta', 'materiali edili'],
+            plumbing: ['idraulica', 'materiali idraulici'],
+            hardware: ['ferramenta', 'utensili'],
+            paint: ['colorificio', 'vernici'],
+            electrical: ['materiale elettrico', 'elettricità']
+        },
+
+        // Netherlands
+        'netherlands': {
+            general: ['bouwmarkt', 'bouwmaterialen'],
+            plumbing: ['loodgieter', 'sanitair'],
+            hardware: ['ijzerhandel', 'gereedschap'],
+            paint: ['verfwinkel', 'verf'],
+            electrical: ['elektrotechniek', 'elektrische materialen']
+        },
+
+        // Poland
+        'poland': {
+            general: ['sklep budowlany', 'materiały budowlane'],
+            plumbing: ['sklep hydrauliczny', 'hydraulika'],
+            hardware: ['sklep żelazny', 'narzędzia'],
+            paint: ['sklep z farbami', 'farby'],
+            electrical: ['sklep elektryczny', 'materiały elektryczne']
+        },
+        'polska': {
+            general: ['sklep budowlany', 'materiały budowlane'],
+            plumbing: ['sklep hydrauliczny', 'hydraulika'],
+            hardware: ['sklep żelazny', 'narzędzia'],
+            paint: ['sklep z farbami', 'farby'],
+            electrical: ['sklep elektryczny', 'materiały elektryczne']
+        },
+
+        // Sweden
+        'sweden': {
+            general: ['järnaffär', 'byggmaterial'],
+            plumbing: ['rörbutik', 'vvs'],
+            hardware: ['järnaffär', 'verktyg'],
+            paint: ['färghandel', 'måleri'],
+            electrical: ['elaffär', 'elmaterial']
+        },
+
+        // Norway
+        'norway': {
+            general: ['jernvarehandel', 'byggevarer'],
+            plumbing: ['rørhandel', 'vvs'],
+            hardware: ['jernvarehandel', 'verktøy'],
+            paint: ['fargehandel', 'maling'],
+            electrical: ['elektrohandel', 'elektriske materialer']
+        },
+
+        // Denmark
+        'denmark': {
+            general: ['byggemarked', 'bygningsmaterialer'],
+            plumbing: ['vvs forretning', 'vvs'],
+            hardware: ['jernvarehandel', 'værktøj'],
+            paint: ['malingsforretning', 'maling'],
+            electrical: ['el-forretning', 'elektriske materialer']
+        },
+
+        // Finland
+        'finland': {
+            general: ['rautakauppa', 'rakennusmaterialit'],
+            plumbing: ['putkikauppa', 'putkisto'],
+            hardware: ['rautakauppa', 'työkalut'],
+            paint: ['maaliliike', 'maali'],
+            electrical: ['sähköliike', 'sähkötarvikkeet']
+        },
+
+        // Japan
+        'japan': {
+            general: ['ホームセンター', '建材店'],
+            plumbing: ['水道屋', '配管材料'],
+            hardware: ['金物店', '工具店'],
+            paint: ['塗料店', 'ペンキ屋'],
+            electrical: ['電気店', '電材店']
+        },
+
+        // China
+        'china': {
+            general: ['五金店', '建材店'],
+            plumbing: ['水暖店', '水管店'],
+            hardware: ['五金店', '工具店'],
+            paint: ['油漆店', '涂料店'],
+            electrical: ['电器店', '电料店']
+        },
+
+        // South Korea
+        'south korea': {
+            general: ['철물점', '건자재'],
+            plumbing: ['배관자재', '수도재료'],
+            hardware: ['철물점', '공구'],
+            paint: ['페인트 가게', '도료'],
+            electrical: ['전기자재', '전기재료']
+        },
+        'korea': {
+            general: ['철물점', '건자재'],
+            plumbing: ['배관자재', '수도재료'],
+            hardware: ['철물점', '공구'],
+            paint: ['페인트 가게', '도료'],
+            electrical: ['전기자재', '전기재료']
+        },
+
+        // India
+        'india': {
+            general: ['hardware store', 'building materials'],
+            plumbing: ['plumbing store', 'sanitary store'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint store', 'paints'],
+            electrical: ['electrical store', 'electrical goods']
+        },
+
+        // Indonesia
+        'indonesia': {
+            general: ['toko bangunan', 'material bangunan'],
+            plumbing: ['toko pipa', 'perlengkapan pipa'],
+            hardware: ['toko besi', 'perkakas'],
+            paint: ['toko cat', 'cat'],
+            electrical: ['toko listrik', 'perlengkapan listrik']
+        },
+
+        // Thailand
+        'thailand': {
+            general: ['ร้านวัสดุก่อสร้าง', 'ร้านฮาร์ดแวร์'],
+            plumbing: ['ร้านประปา', 'อุปกรณ์ประปา'],
+            hardware: ['ร้านเหล็ก', 'เครื่องมือช่าง'],
+            paint: ['ร้านสี', 'ร้านขายสี'],
+            electrical: ['ร้านไฟฟ้า', 'อุปกรณ์ไฟฟ้า']
+        },
+
+        // Vietnam
+        'vietnam': {
+            general: ['cửa hàng vật liệu xây dựng', 'cửa hàng sắt thép'],
+            plumbing: ['cửa hàng vật tư nước', 'cửa hàng ống nước'],
+            hardware: ['cửa hàng sắt thép', 'dụng cụ'],
+            paint: ['cửa hàng sơn', 'sơn'],
+            electrical: ['cửa hàng điện', 'vật liệu điện']
+        },
+
+        // Philippines
+        'philippines': {
+            general: ['hardware store', 'construction materials'],
+            plumbing: ['plumbing supplies', 'pipe store'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint store', 'paints'],
+            electrical: ['electrical supply', 'electrical materials']
+        },
+
+        // Malaysia
+        'malaysia': {
+            general: ['kedai besi', 'bahan binaan'],
+            plumbing: ['kedai paip', 'kelengkapan paip'],
+            hardware: ['kedai besi', 'peralatan'],
+            paint: ['kedai cat', 'cat'],
+            electrical: ['kedai elektrik', 'bahan elektrik']
+        },
+
+        // Singapore
+        'singapore': {
+            general: ['hardware shop', 'building materials'],
+            plumbing: ['plumbing supplies', 'sanitary ware'],
+            hardware: ['hardware shop', 'tools'],
+            paint: ['paint shop', 'paints'],
+            electrical: ['electrical shop', 'electrical supplies']
+        },
+
+        // Australia
+        'australia': {
+            general: ['hardware store', 'building supplies'],
+            plumbing: ['plumbing supplies', 'trade plumbing'],
+            hardware: ['hardware store', 'trade tools'],
+            paint: ['paint store', 'painting supplies'],
+            electrical: ['electrical wholesaler', 'electrical supplies']
+        },
+
+        // New Zealand
+        'new zealand': {
+            general: ['hardware store', 'building supplies'],
+            plumbing: ['plumbing supplies', 'plumbing center'],
+            hardware: ['hardware store', 'trade tools'],
+            paint: ['paint store', 'resene'],
+            electrical: ['electrical wholesaler', 'electrical supplies']
+        },
+
+        // South Africa
+        'south africa': {
+            general: ['hardware store', 'building supplies'],
+            plumbing: ['plumbing warehouse', 'plumbing supplies'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint store', 'paint warehouse'],
+            electrical: ['electrical warehouse', 'electrical supplies']
+        },
+
+        // Egypt
+        'egypt': {
+            general: ['محل أدوات صحية', 'مواد بناء'],
+            plumbing: ['محل سباكة', 'مواد سباكة'],
+            hardware: ['محل حدايد', 'أدوات'],
+            paint: ['محل دهانات', 'دهانات'],
+            electrical: ['محل كهرباء', 'مواد كهربائية']
+        },
+
+        // Nigeria
+        'nigeria': {
+            general: ['hardware store', 'building materials'],
+            plumbing: ['plumbing supplies', 'sanitary ware'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint shop', 'paints'],
+            electrical: ['electrical shop', 'electrical materials']
+        },
+
+        // UAE
+        'united arab emirates': {
+            general: ['hardware store', 'building materials'],
+            plumbing: ['plumbing supplies', 'sanitary ware'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint shop', 'paints'],
+            electrical: ['electrical shop', 'electrical materials']
+        },
+        'uae': {
+            general: ['hardware store', 'building materials'],
+            plumbing: ['plumbing supplies', 'sanitary ware'],
+            hardware: ['hardware store', 'tools'],
+            paint: ['paint shop', 'paints'],
+            electrical: ['electrical shop', 'electrical materials']
+        },
+
+        // Saudi Arabia
+        'saudi arabia': {
+            general: ['محل أدوات صحية', 'مواد بناء'],
+            plumbing: ['محل سباكة', 'مواد سباكة'],
+            hardware: ['محل حدايد', 'أدوات'],
+            paint: ['محل دهانات', 'دهانات'],
+            electrical: ['محل كهرباء', 'مواد كهربائية']
+        },
+
+        // Israel
+        'israel': {
+            general: ['חומרי בניין', 'חנות כלי עבודה'],
+            plumbing: ['אינסטלציה', 'ציוד אינסטלציה'],
+            hardware: ['חנות כלי עבודה', 'כלי עבודה'],
+            paint: ['חנות צבעים', 'צבעים'],
+            electrical: ['חנות חשמל', 'ציוד חשמל']
+        },
+
+        // Turkey
+        'turkey': {
+            general: ['hırdavat', 'yapı malzemeleri'],
+            plumbing: ['tesisat malzemeleri', 'sıhhi tesisat'],
+            hardware: ['hırdavat', 'el aletleri'],
+            paint: ['boya', 'boya satışı'],
+            electrical: ['elektrik malzemeleri', 'elektrik']
+        },
+
+        // Russia
+        'russia': {
+            general: ['строительный магазин', 'стройматериалы'],
+            plumbing: ['сантехника', 'сантехнические материалы'],
+            hardware: ['магазин инструментов', 'инструменты'],
+            paint: ['магазин красок', 'краски'],
+            electrical: ['электротовары', 'электрические материалы']
+        }
     };
 
-    // Default to Brasil keywords
-    return keywordMap[normalized] || keywordMap['brasil'];
+    // Get keywords for this country (or default to Brasil)
+    const countryKeywords = categoryKeywords[normalized] || categoryKeywords['brasil'];
+
+    // Collect keywords for selected categories
+    const selectedKeywords = [];
+    categories.forEach(category => {
+        const keywords = countryKeywords[category];
+        if (keywords && Array.isArray(keywords)) {
+            selectedKeywords.push(...keywords);
+        }
+    });
+
+    // If no valid categories selected, return general category as fallback
+    if (selectedKeywords.length === 0) {
+        return countryKeywords.general || ['material de construção'];
+    }
+
+    return selectedKeywords;
 }
 
 /**
@@ -383,10 +782,16 @@ async function searchTextNearby(latitude, longitude, radius, textQuery, maxResul
  * Multi-keyword hybrid search - GUARANTEED comprehensive results
  * Searches using multiple local keywords (e.g., "loja de ferragem", "material de construção")
  * Combines results and removes duplicates
+ *
+ * @param {Array<string>} storeCategories - Optional array of category filters (general, plumbing, hardware, paint, electrical)
  */
-async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResults, countryName) {
+async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResults, countryName, storeCategories = null) {
     const countryConfig = getCountryConfig(countryName);
-    const keywords = getSearchKeywords(countryName);
+
+    // Use category-based keywords if categories provided, otherwise use legacy keywords
+    const keywords = storeCategories && storeCategories.length > 0
+        ? getSearchKeywordsByCategory(countryName, storeCategories)
+        : getSearchKeywords(countryName);
 
     console.log(`[Keyword Search] Starting multi-keyword search for ${countryName}`);
     console.log(`[Keyword Search] ${keywords.length} keywords to search (optimized for speed)`);
@@ -500,8 +905,10 @@ async function searchByKeywordsAndLocation(latitude, longitude, radius, maxResul
  * Search for nearby stores in a specific location
  * NOW USES KEYWORD-BASED TEXT SEARCH for comprehensive, guaranteed results!
  * Searches ALL local terms: "loja de ferragem", "material de construção", "loja de tintas", etc.
+ *
+ * @param {Array<string>} storeCategories - Optional array of category filters (general, plumbing, hardware, paint, electrical)
  */
-export async function searchNearbyStores(latitude, longitude, radius = 3000, maxResults = 20, countryName = 'Brasil') {
+export async function searchNearbyStores(latitude, longitude, radius = 3000, maxResults = 20, countryName = 'Brasil', storeCategories = null) {
     if (!GOOGLE_API_KEY || GOOGLE_API_KEY === 'your_google_api_key_here') {
         return {
             success: false,
@@ -512,6 +919,9 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
 
     try {
         console.log(`[Nearby Search] 🔍 KEYWORD-BASED SEARCH at [${latitude}, ${longitude}] radius ${radius}m in ${countryName}`);
+        if (storeCategories && storeCategories.length > 0) {
+            console.log(`[Nearby Search] 🎯 Category filter: ${storeCategories.join(', ')}`);
+        }
 
         // Use the new keyword-based search instead of type-based search
         const result = await searchByKeywordsAndLocation(
@@ -519,7 +929,8 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
             longitude,
             radius,
             maxResults,
-            countryName
+            countryName,
+            storeCategories
         );
 
         return result;
@@ -544,8 +955,9 @@ export async function searchNearbyStores(latitude, longitude, radius = 3000, max
  * @param {Array} zones - Custom zones to search (if not provided, uses Rio zones)
  * @param {string} countryName - Country name for language/region settings
  * @param {number} maxNeighborhoods - Maximum neighborhoods to search (for timeout prevention, default: 3)
+ * @param {Array<string>} storeCategories - Optional array of category filters (general, plumbing, hardware, paint, electrical)
  */
-export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil', maxNeighborhoods = 3) {
+export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zones = null, countryName = 'Brasil', maxNeighborhoods = 3, storeCategories = null) {
     // Use provided zones or fall back to Rio zones for backward compatibility
     const searchZones = zones || RIO_SEARCH_ZONES;
 
@@ -591,7 +1003,8 @@ export async function searchAllZones(maxStores = 111, existingPlaceIds = [], zon
             parseFloat(lng),
             radius,
             maxResultsForThisZone,
-            countryName
+            countryName,
+            storeCategories
         );
 
         // CRITICAL FIX: Track actual API calls made (keyword search makes multiple calls)

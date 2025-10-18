@@ -22,9 +22,12 @@
 
 import { neon } from '@netlify/neon';
 import { searchNearbyStores } from './utils/places_nearby_google.js';
+import { normalizeCountryCode } from './utils/language-detector.js';
+import { searchPlaces as searchFoursquarePlaces } from './utils/foursquare-integration.js';
 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123';
+const TIME_BUDGET_MS = 24000; // 24 seconds safe limit (Netlify timeout is 26s)
 
 /**
  * Calculate the store limit based on apuration count
@@ -35,6 +38,29 @@ function calculateStoreLimit(apurationCount) {
     if (apurationCount >= 2 && apurationCount <= 5) return 20;  // 3rd-6th runs
     if (apurationCount >= 6) return 18;     // 7th+ runs
     return 666; // Default fallback
+}
+
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ * @param {number} lat1 - Latitude of first point
+ * @param {number} lon1 - Longitude of first point
+ * @param {number} lat2 - Latitude of second point
+ * @param {number} lon2 - Longitude of second point
+ * @returns {number} Distance in meters
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
 }
 
 export const handler = async (event) => {
@@ -50,7 +76,7 @@ export const handler = async (event) => {
     }
 
     try {
-        const { password, neighborhood_ids } = JSON.parse(event.body);
+        const { password, neighborhood_ids, store_categories } = JSON.parse(event.body);
 
         // ========================================================================
         // STEP 1: Verify admin password
@@ -79,20 +105,28 @@ export const handler = async (event) => {
         }
 
         console.log('[Scoped Auto-Populate] ✅ Admin authenticated');
-        console.log(`[Scoped Auto-Populate] Starting apuration for ${neighborhood_ids.length} neighborhoods...\n`);
+        console.log(`[Scoped Auto-Populate] Starting apuration for ${neighborhood_ids.length} neighborhoods...`);
+
+        if (store_categories && store_categories.length > 0) {
+            console.log(`[Scoped Auto-Populate] 🎯 Category filter: ${store_categories.join(', ')}`);
+        } else {
+            console.log(`[Scoped Auto-Populate] 📦 Using default categories (general, plumbing, hardware)`);
+        }
+        console.log('');
 
         // ========================================================================
-        // STEP 2: Get existing Google Place IDs to prevent duplicates
+        // STEP 2: Get existing stores to prevent duplicates
         // ========================================================================
-        console.log('[Scoped Auto-Populate] Step 1: Fetching existing Place IDs...');
+        console.log('[Scoped Auto-Populate] Step 1: Fetching existing stores...');
 
         const existingStores = await sql`
-            SELECT google_place_id
+            SELECT google_place_id, nome, latitude, longitude, source
             FROM lojas
-            WHERE google_place_id IS NOT NULL
         `;
 
-        const existingPlaceIds = existingStores.map(s => s.google_place_id);
+        const existingPlaceIds = existingStores
+            .filter(s => s.google_place_id)
+            .map(s => s.google_place_id);
         console.log(`[Scoped Auto-Populate] Found ${existingPlaceIds.length} existing Place IDs in database`);
 
         // ========================================================================
@@ -110,7 +144,8 @@ export const handler = async (event) => {
                 n.apuration_count,
                 n.city_id,
                 c.name as city_name,
-                c.country as city_country
+                c.country as city_country,
+                c.country_code
             FROM neighborhoods n
             JOIN cities c ON c.id = n.city_id
             WHERE n.id = ANY(${neighborhood_ids})
@@ -142,8 +177,24 @@ export const handler = async (event) => {
         let totalApiCalls = 0;
         let totalStoresSkipped = 0;
         const neighborhoodResults = [];
+        let timeoutPrevented = false;
+
+        const searchStartTime = Date.now();
 
         for (const neighborhood of neighborhoods) {
+            // Check time budget before processing each neighborhood
+            const elapsedTime = Date.now() - searchStartTime;
+            const remainingTime = TIME_BUDGET_MS - elapsedTime;
+
+            if (elapsedTime > TIME_BUDGET_MS) {
+                console.log(`\n[Scoped Auto-Populate] ⏱️  TIME BUDGET EXCEEDED (${(elapsedTime / 1000).toFixed(1)}s / 24s)`);
+                console.log(`[Scoped Auto-Populate] Returning partial results to prevent timeout`);
+                console.log(`[Scoped Auto-Populate] Completed: ${neighborhoodResults.length}/${neighborhoods.length} neighborhoods`);
+                timeoutPrevented = true;
+                break;
+            }
+
+            console.log(`[Scoped Auto-Populate] ⏱️  Time remaining: ${(remainingTime / 1000).toFixed(1)}s`);
             const limit = calculateStoreLimit(neighborhood.apuration_count);
             let storesForNeighborhood = [];
             let apiCallsForNeighborhood = 0;
@@ -153,13 +204,27 @@ export const handler = async (event) => {
             console.log(`[Scoped Auto-Populate]   Limit: ${limit} stores`);
             console.log(`[Scoped Auto-Populate]   Radius: ${neighborhood.radius}m`);
 
-            // Search this neighborhood
+            // Use country_code from countries table if available, otherwise normalize country name
+            const countryCode = neighborhood.country_code
+                ? neighborhood.country_code
+                : normalizeCountryCode(neighborhood.city_country || 'Brasil');
+            console.log(`[Scoped Auto-Populate]   Country: ${neighborhood.city_country} (${countryCode})`);
+
+            // Log category selection for transparency
+            const categoriesUsed = store_categories && store_categories.length > 0
+                ? store_categories
+                : ['general', 'plumbing', 'hardware'];
+            console.log(`[Scoped Auto-Populate]   Categories: ${categoriesUsed.join(', ')}`);
+            console.log(`[Scoped Auto-Populate]   Language-aware search: Keywords will be in local language`);
+
+            // Search this neighborhood with language-aware keywords
             const result = await searchNearbyStores(
                 parseFloat(neighborhood.center_lat),
                 parseFloat(neighborhood.center_lng),
                 neighborhood.radius,
                 Math.min(20, limit), // Google API max is 20 per call
-                neighborhood.city_country || 'Brasil' // Pass country for keyword selection
+                countryCode, // Pass country code for language-aware keyword selection
+                store_categories || null // Pass category filter (optional)
             );
 
             apiCallsForNeighborhood++;
@@ -201,8 +266,94 @@ export const handler = async (event) => {
                 return !isDuplicate;
             });
 
+            // ============================================================
+            // FOURSQUARE BACKUP: Dynamic threshold based on search scope
+            // - Neighborhood-level (radius < 5km): Trigger if <10 stores
+            // - City-level or above (radius >= 5km): Trigger if <45 stores
+            // ============================================================
+            const iscityLevel = neighborhood.radius >= 5000; // 5km+ = city-level search
+            const foursquareThreshold = iscityLevel ? 45 : 10;
+
+            let foursquareStores = [];
+            if (newStores.length < foursquareThreshold) {
+                const scope = iscityLevel ? 'city-level' : 'neighborhood-level';
+                console.log(`[Scoped Auto-Populate] 🟡 Google found ${newStores.length} < ${foursquareThreshold} stores (${scope}), triggering Foursquare backup...`);
+
+                try {
+                    // Search Foursquare for stores
+                    const foursquarePlaces = await searchFoursquarePlaces(
+                        'store shop market',
+                        parseFloat(neighborhood.center_lat),
+                        parseFloat(neighborhood.center_lng),
+                        neighborhood.radius,
+                        30 // Request up to 30 results to compensate for Google's lack
+                    );
+
+                    apiCallsForNeighborhood++;
+                    totalApiCalls++;
+
+                    console.log(`[Scoped Auto-Populate] Foursquare found ${foursquarePlaces.length} places`);
+
+                    // Transform Foursquare results to our store format
+                    const transformedFoursquare = foursquarePlaces.map(place => ({
+                        nome: place.name,
+                        endereco: place.address || 'Address not available',
+                        telefone: null, // Foursquare doesn't provide phone in basic search
+                        website: null,
+                        latitude: place.lat,
+                        longitude: place.lng,
+                        categoria: 'general',
+                        google_place_id: null, // Foursquare results don't have Google Place IDs
+                        foursquare_id: place.id, // Store Foursquare ID for reference
+                        source: 'foursquare'
+                    }));
+
+                    // Deduplicate Foursquare results against:
+                    // 1. Google results from current search
+                    // 2. Existing stores in database
+                    // (check for name similarity + proximity within 50m)
+                    const deduplicatedFoursquare = transformedFoursquare.filter(fsqStore => {
+                        // Check against Google results from current search
+                        const duplicateInGoogle = newStores.some(googleStore => {
+                            const nameSimilar = googleStore.nome.toLowerCase() === fsqStore.nome.toLowerCase();
+                            const distance = calculateDistance(
+                                googleStore.latitude,
+                                googleStore.longitude,
+                                fsqStore.latitude,
+                                fsqStore.longitude
+                            );
+                            return nameSimilar || distance < 50;
+                        });
+
+                        // Check against existing stores in database
+                        const duplicateInDatabase = existingStores.some(existingStore => {
+                            const nameSimilar = existingStore.nome.toLowerCase() === fsqStore.nome.toLowerCase();
+                            const distance = calculateDistance(
+                                existingStore.latitude,
+                                existingStore.longitude,
+                                fsqStore.latitude,
+                                fsqStore.longitude
+                            );
+                            return nameSimilar || distance < 50;
+                        });
+
+                        return !duplicateInGoogle && !duplicateInDatabase;
+                    });
+
+                    foursquareStores = deduplicatedFoursquare;
+                    console.log(`[Scoped Auto-Populate] Foursquare: ${foursquarePlaces.length} found, ${deduplicatedFoursquare.length} unique (after dedup)`);
+
+                } catch (fsqError) {
+                    console.warn(`[Scoped Auto-Populate] ⚠️  Foursquare backup failed: ${fsqError.message}`);
+                    // Don't throw - continue with Google results only
+                }
+            }
+
+            // Combine Google + Foursquare results
+            const combinedStores = [...newStores, ...foursquareStores];
+
             // Apply limit
-            const limitedStores = newStores.slice(0, limit);
+            const limitedStores = combinedStores.slice(0, limit);
 
             // Add neighborhood info to stores
             limitedStores.forEach(store => {
@@ -213,7 +364,12 @@ export const handler = async (event) => {
             storesForNeighborhood = limitedStores;
             allStores.push(...limitedStores);
 
-            console.log(`[Scoped Auto-Populate] ${neighborhood.name}: Found ${result.found}, New: ${newStores.length}, Added: ${limitedStores.length}, Skipped: ${skippedForNeighborhood}`);
+            // Log results with source breakdown
+            if (foursquareStores.length > 0) {
+                console.log(`[Scoped Auto-Populate] ${neighborhood.name}: Google ${newStores.length} + Foursquare ${foursquareStores.length} = ${combinedStores.length} total, Added: ${limitedStores.length}, Skipped: ${skippedForNeighborhood}`);
+            } else {
+                console.log(`[Scoped Auto-Populate] ${neighborhood.name}: Found ${result.found}, New: ${newStores.length}, Added: ${limitedStores.length}, Skipped: ${skippedForNeighborhood}`);
+            }
 
             neighborhoodResults.push({
                 neighborhood_id: neighborhood.id,
@@ -447,7 +603,9 @@ export const handler = async (event) => {
             },
             body: JSON.stringify({
                 success: true,
-                message: 'Scoped auto-population completed successfully',
+                message: timeoutPrevented
+                    ? 'Scoped auto-population completed with partial results (time budget reached)'
+                    : 'Scoped auto-population completed successfully',
                 summary: {
                     neighborhoods_searched: neighborhoods.length,
                     stores_added: storesAdded,
@@ -461,6 +619,13 @@ export const handler = async (event) => {
                     user_added_count: currentStats.user_added_count,
                     auto_added_count: currentStats.auto_added_count,
                     total_stores: currentStats.total_stores
+                },
+                metadata: {
+                    timeout_prevented: timeoutPrevented,
+                    neighborhoods_completed: neighborhoodResults.length,
+                    neighborhoods_total: neighborhoods.length,
+                    time_budget_ms: TIME_BUDGET_MS,
+                    execution_time_ms: executionTime
                 },
                 errors: errors.length > 0 ? errors : null
             }),

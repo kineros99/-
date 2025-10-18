@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Auto-Population | Encarregado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="logger.css" />
     <style>
         * {
             box-sizing: border-box;
@@ -336,6 +337,139 @@
             font-size: 12px;
             color: #666;
         }
+
+    /* Floating Log Overlay */
+    .floating-log {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 450px;
+        max-width: 90vw;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        z-index: 9999;
+        transition: all 0.3s ease;
+        display: none;
+    }
+
+    .floating-log.active {
+        display: block;
+        animation: slideInRight 0.3s ease;
+    }
+
+    .floating-log.minimized {
+        width: 200px;
+        height: 50px;
+    }
+
+    .floating-log-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 15px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .floating-log-header h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .floating-log-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .floating-log-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        font-size: 12px;
+    }
+
+    .floating-log-btn:hover {
+        background: rgba(255,255,255,0.35);
+    }
+
+    .floating-log-content {
+        padding: 15px;
+        max-height: 350px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.7;
+        background: #f8f9fa;
+    }
+
+    .floating-log.minimized .floating-log-content {
+        display: none;
+    }
+
+    .floating-log-entry {
+        margin-bottom: 6px;
+        padding: 4px 0;
+    }
+
+    .floating-log-entry.success {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    .floating-log-entry.error {
+        color: #dc3545;
+        font-weight: 500;
+    }
+
+    .floating-log-entry.info {
+        color: #667eea;
+    }
+
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); }
+        50% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.7); }
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .floating-log.active-operation {
+        animation: pulse 2s infinite;
+    }
+
+    .floating-log-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-left: 8px;
+    }
     </style>
 </head>
 <body>
@@ -413,61 +547,73 @@
             <!-- Location Selection -->
             <div style="margin-bottom: 20px;">
                 <h3 style="color: #667eea; margin-bottom: 15px;">
-                    <i class="fas fa-map-marker-alt"></i> Seleção de Localização
+                    <i class="fas fa-map-marker-alt"></i> Seleção de Localização (Filtros Opcionais)
                 </h3>
 
-                <input
-                    type="text"
-                    id="country-input"
-                    class="password-input"
-                    placeholder="País (ex: Brasil, Argentina, Peru)"
-                    autocomplete="off"
-                    value="Brasil"
-                />
-
-                <input
-                    type="text"
-                    id="state-input"
-                    class="password-input"
-                    placeholder="Estado (ex: Rio de Janeiro, São Paulo)"
-                    autocomplete="off"
-                />
-
-                <div style="position: relative;">
-                    <input
-                        type="text"
-                        id="city-search-input"
-                        class="password-input"
-                        placeholder="Digite o nome da cidade..."
-                        autocomplete="off"
-                    />
-                    <div id="city-dropdown" style="
-                        display: none;
-                        position: absolute;
-                        top: 100%;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        border: 2px solid #667eea;
-                        border-radius: 8px;
-                        max-height: 200px;
-                        overflow-y: auto;
-                        z-index: 1000;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    "></div>
-                </div>
-
-                <div id="selected-city-info" style="
-                    display: none;
+                <div id="filter-summary-badge" style="
                     background: #e7f3ff;
                     border: 2px solid #667eea;
                     border-radius: 8px;
-                    padding: 15px;
-                    margin-top: 10px;
+                    padding: 12px;
+                    margin-bottom: 15px;
+                    display: none;
                 ">
-                    <strong style="color: #667eea;">Cidade Selecionada:</strong>
-                    <div id="selected-city-text" style="margin-top: 5px; font-size: 16px;"></div>
-                    <div id="neighborhoods-info" style="margin-top: 10px; color: #666; font-size: 14px;"></div>
+                    <strong style="color: #667eea;">🎯 Filtros Ativos:</strong>
+                    <div id="filter-summary-text" style="margin-top: 5px; font-size: 14px;"></div>
+                    <button id="clear-filters-btn" style="
+                        margin-top: 10px;
+                        padding: 8px 16px;
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">
+                        <i class="fas fa-times"></i> Limpar Todos os Filtros
+                    </button>
+                </div>
+
+                <!-- Step 0: Country Selection -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #667eea; font-weight: bold; margin-bottom: 8px;">
+                        <i class="fas fa-globe"></i> País (Opcional)
+                    </label>
+                    <select id="country-select" class="form-input" style="margin-bottom: 0;">
+                        <option value="">🌍 Nenhum filtro - Buscar em todos os países</option>
+                    </select>
+                    <button id="confirm-country-btn" class="run-button" style="margin-top: 10px; padding: 12px; display: none;" disabled>
+                        <i class="fas fa-check"></i>
+                        <span>Confirmar País</span>
+                    </button>
+                </div>
+
+                <!-- Step 1: State Selection -->
+                <div id="state-section" style="display: none; margin-bottom: 15px;">
+                    <label style="display: block; color: #667eea; font-weight: bold; margin-bottom: 8px;">
+                        <i class="fas fa-map"></i> Estado/Região (Opcional)
+                    </label>
+                    <select id="state-select" class="form-input" style="margin-bottom: 0;">
+                        <option value="">Carregando estados...</option>
+                    </select>
+                    <button id="confirm-state-btn" class="run-button" style="margin-top: 10px; padding: 12px; display: none;" disabled>
+                        <i class="fas fa-check"></i>
+                        <span>Confirmar Estado</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: City Selection -->
+                <div id="city-section" style="display: none; margin-bottom: 15px;">
+                    <label style="display: block; color: #667eea; font-weight: bold; margin-bottom: 8px;">
+                        <i class="fas fa-city"></i> Cidade (Opcional)
+                    </label>
+                    <select id="city-select" class="form-input" style="margin-bottom: 0;">
+                        <option value="">Carregando cidades...</option>
+                    </select>
+                    <button id="confirm-city-btn" class="run-button" style="margin-top: 10px; padding: 12px; display: none;" disabled>
+                        <i class="fas fa-check"></i>
+                        <span>Confirmar Cidade</span>
+                    </button>
                 </div>
             </div>
 
@@ -518,6 +664,29 @@
         </a>
     </div>
 
+    <!-- Floating Log Overlay -->
+    <div id="floating-log" class="floating-log">
+        <div class="floating-log-header" onclick="toggleFloatingLog()">
+            <h4>
+                <i class="fas fa-terminal"></i>
+                <span id="floating-log-title">Progresso</span>
+                <span id="floating-log-badge" class="floating-log-badge" style="display: none;">0</span>
+            </h4>
+            <div class="floating-log-controls">
+                <button class="floating-log-btn" onclick="event.stopPropagation(); minimizeFloatingLog();" title="Minimizar">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
+                <button class="floating-log-btn" onclick="event.stopPropagation(); closeFloatingLog();" title="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="floating-log-content" id="floating-log-content">
+            <div class="floating-log-entry info">Aguardando operação...</div>
+        </div>
+    </div>
+
+    <script src="logger.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

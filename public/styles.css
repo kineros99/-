@@ -902,6 +902,12 @@ select:focus, input:focus {
     margin-top: 3px;
 }
 
+.city-option.best-match {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
 .selected-city-info {
     margin-top: 8px;
     margin-bottom: 8px;
