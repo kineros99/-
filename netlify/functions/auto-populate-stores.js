@@ -29,9 +29,9 @@
 import { neon } from '@netlify/neon';
 import { searchNearbyStores } from './utils/places_nearby_google.js';
 import { normalizeCountryCode } from './utils/language-detector.js';
+import { verifyAdminCredentials } from './utils/admin-auth.js';
 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123'; // Set in Netlify env vars
 const TIME_BUDGET_MS = 24000; // 24 seconds safe limit (Netlify timeout is 26s)
 
 export const handler = async (event) => {
@@ -47,22 +47,22 @@ export const handler = async (event) => {
     }
 
     try {
-        const { password, filters } = JSON.parse(event.body);
+        const { username, password, filters } = JSON.parse(event.body);
 
-        // Verify admin password
-        if (password !== ADMIN_PASSWORD) {
-            console.log('[Auto-Populate] ❌ Invalid password attempt');
+        // Verify admin credentials
+        if (!verifyAdminCredentials(username, password)) {
+            console.log('[Auto-Populate] ❌ Invalid credentials attempt');
             return {
                 statusCode: 401,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     error: 'Unauthorized',
-                    message: 'Invalid admin password'
+                    message: 'Invalid admin credentials'
                 }),
             };
         }
 
-        console.log('[Auto-Populate] ✅ Admin authenticated');
+        console.log('[Auto-Populate] ✅ Admin authenticated:', username);
         console.log('[Auto-Populate] Starting auto-population process...\n');
 
         // ========================================================================

@@ -21,9 +21,9 @@
  */
 
 import { neon } from '@netlify/neon';
+import { verifyAdminCredentials } from './utils/admin-auth.js';
 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123';
 
 export const handler = async (event) => {
     const startTime = Date.now();
@@ -38,24 +38,24 @@ export const handler = async (event) => {
     }
 
     try {
-        const { password, cityId } = JSON.parse(event.body);
+        const { username, password, cityId } = JSON.parse(event.body);
 
         // ========================================================================
-        // STEP 1: Verify admin password
+        // STEP 1: Verify admin credentials
         // ========================================================================
-        if (password !== ADMIN_PASSWORD) {
-            console.log('[Reset Apuration] ❌ Invalid password attempt');
+        if (!verifyAdminCredentials(username, password)) {
+            console.log('[Reset Apuration] ❌ Invalid credentials attempt');
             return {
                 statusCode: 401,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     error: 'Unauthorized',
-                    message: 'Invalid admin password'
+                    message: 'Invalid admin credentials'
                 }),
             };
         }
 
-        console.log('[Reset Apuration] ✅ Admin authenticated');
+        console.log('[Reset Apuration] ✅ Admin authenticated:', username);
 
         // ========================================================================
         // STEP 2: Reset apuration counts

@@ -24,9 +24,9 @@ import { neon } from '@netlify/neon';
 import { searchNearbyStores } from './utils/places_nearby_google.js';
 import { normalizeCountryCode } from './utils/language-detector.js';
 import { searchPlaces as searchFoursquarePlaces } from './utils/foursquare-integration.js';
+import { verifyAdminCredentials } from './utils/admin-auth.js';
 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123';
 const TIME_BUDGET_MS = 24000; // 24 seconds safe limit (Netlify timeout is 26s)
 
 /**
@@ -76,19 +76,19 @@ export const handler = async (event) => {
     }
 
     try {
-        const { password, neighborhood_ids, store_categories } = JSON.parse(event.body);
+        const { username, password, neighborhood_ids, store_categories } = JSON.parse(event.body);
 
         // ========================================================================
-        // STEP 1: Verify admin password
+        // STEP 1: Verify admin credentials
         // ========================================================================
-        if (password !== ADMIN_PASSWORD) {
-            console.log('[Scoped Auto-Populate] ❌ Invalid password attempt');
+        if (!verifyAdminCredentials(username, password)) {
+            console.log('[Scoped Auto-Populate] ❌ Invalid credentials attempt');
             return {
                 statusCode: 401,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     error: 'Unauthorized',
-                    message: 'Invalid admin password'
+                    message: 'Invalid admin credentials'
                 }),
             };
         }
@@ -104,7 +104,7 @@ export const handler = async (event) => {
             };
         }
 
-        console.log('[Scoped Auto-Populate] ✅ Admin authenticated');
+        console.log('[Scoped Auto-Populate] ✅ Admin authenticated:', username);
         console.log(`[Scoped Auto-Populate] Starting apuration for ${neighborhood_ids.length} neighborhoods...`);
 
         if (store_categories && store_categories.length > 0) {

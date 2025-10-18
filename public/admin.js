@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sessionAge = Date.now() - session.timestamp;
                 const MAX_SESSION_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
-                if (session.username === 'kinEROS' && sessionAge < MAX_SESSION_AGE) {
+                if ((session.username === 'kinEROS' || session.username === 'student') && sessionAge < MAX_SESSION_AGE) {
                     // Valid session exists - auto-login
                     console.log('[Auth] Valid session found, auto-authenticating...');
                     isAuthenticated = true;
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (username !== 'kinEROS') {
+        if (username !== 'kinEROS' && username !== 'student') {
             showAuthMessage('Usuário inválido', 'error');
             return;
         }
@@ -684,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        username: username,
                         password: password,
                         filters: filters
                     })
@@ -958,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (username !== 'kinEROS') {
+            if (username !== 'kinEROS' && username !== 'student') {
                 showMessage('Usuário inválido', 'error');
                 return;
             }
@@ -1030,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        username: username,
                         password: password,
                         filters: filters
                     })

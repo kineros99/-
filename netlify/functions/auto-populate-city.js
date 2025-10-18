@@ -26,9 +26,9 @@
 
 import { neon } from '@netlify/neon';
 import { searchAllZones } from './utils/places_nearby_google.js';
+import { verifyAdminCredentials } from './utils/admin-auth.js';
 
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123'; // Set in Netlify env vars
 
 export const handler = async (event) => {
     const startTime = Date.now();
@@ -43,17 +43,17 @@ export const handler = async (event) => {
     }
 
     try {
-        const { password, cityId } = JSON.parse(event.body);
+        const { username, password, cityId } = JSON.parse(event.body);
 
-        // Verify admin password
-        if (password !== ADMIN_PASSWORD) {
-            console.log('[Auto-Populate City] ❌ Invalid password attempt');
+        // Verify admin credentials
+        if (!verifyAdminCredentials(username, password)) {
+            console.log('[Auto-Populate City] ❌ Invalid credentials attempt');
             return {
                 statusCode: 401,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     error: 'Unauthorized',
-                    message: 'Invalid admin password'
+                    message: 'Invalid admin credentials'
                 }),
             };
         }
@@ -68,7 +68,7 @@ export const handler = async (event) => {
             };
         }
 
-        console.log('[Auto-Populate City] ✅ Admin authenticated');
+        console.log('[Auto-Populate City] ✅ Admin authenticated:', username);
         console.log(`[Auto-Populate City] Starting auto-population for city ID: ${cityId}\n`);
 
         // ========================================================================
